@@ -1,0 +1,3 @@
+[submodule "golang/cmd/shared"]
+	path = golang/cmd/shared
+	url = https://github.com/hyeonwoody/shared
