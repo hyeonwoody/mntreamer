@@ -1,0 +1,14 @@
+
+version: '3'
+services:
+
+  mntreamer_mysql:
+    build: 
+      context: ./mysql
+      dockerfile: Dockerfile
+    container_name: mntreamer_mysql
+    image: mntreamer_mysql
+    ports:
+      - "11001:3306"
+    volumes:
+      - ./mysql/mysql_data:/var/lib/mysql
