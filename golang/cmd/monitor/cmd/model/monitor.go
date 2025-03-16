@@ -3,9 +3,10 @@ package model
 import "time"
 
 type StreamerMonitor struct {
-	Platform_id uint16
-	Streamer_id uint32
-	CheckAt     time.Time
+	PlatformId uint16 `gorm:"primaryKey;autoIncrement:false;uniqueIndex:idx_platform_streamerId"`
+	StreamerId uint32 `gorm:"primaryKey;autoIncrement:false;uniqueIndex:idx_platform_streamerId"`
+	CheckAt    time.Time
+	MissCount  uint8
 }
 
 func (StreamerMonitor) TableName() string {
@@ -14,8 +15,9 @@ func (StreamerMonitor) TableName() string {
 
 func NewStreamerMonitor(platforId uint16, streamerId uint32) *StreamerMonitor {
 	return &StreamerMonitor{
-		Platform_id: platforId,
-		Streamer_id: streamerId,
-		CheckAt:     time.Now(),
+		PlatformId: platforId,
+		StreamerId: streamerId,
+		CheckAt:    time.Now(),
+		MissCount:  0,
 	}
 }

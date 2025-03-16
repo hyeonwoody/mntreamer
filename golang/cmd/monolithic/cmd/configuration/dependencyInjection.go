@@ -2,12 +2,12 @@ package configuration
 
 import (
 	"fmt"
+	media "mntreamer/media/cmd/configuration"
 	monitor "mntreamer/monitor/cmd/configuration"
-	platform "mntreamer/platform/cmd/configuration"
-	streamer "mntreamer/streamer/cmd/configuration"
-
 	monitorCtrl "mntreamer/monolithic/cmd/api/monitor/presentation/controller"
+	platform "mntreamer/platform/cmd/configuration"
 	"mntreamer/shared/database"
+	streamer "mntreamer/streamer/cmd/configuration"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -20,6 +20,7 @@ type MonolithicContainer struct {
 	MonitorCtnr  *monitor.MonolithicContainer
 	PlatformCtnr *platform.MonolithicContainer
 	StreamerCtnr *streamer.MonolithicContainer
+	MediaCtnr    *media.MonolithicContainer
 }
 
 func (ctnr *MonolithicContainer) InitVariable() error {
@@ -62,7 +63,8 @@ func (ctnr *MonolithicContainer) InitDependency(dependency any) error {
 	ctnr.MonitorCtnr = monitor.NewMonolithicContainer(ctnr.MysqlWrapper)
 	ctnr.PlatformCtnr = platform.NewMonolithicContainer(ctnr.MysqlWrapper)
 	ctnr.StreamerCtnr = streamer.NewMonolithicContainer(ctnr.MysqlWrapper)
-	ctnr.MonitorCtnr.Controller = monitorCtrl.NewControllerMono(ctnr.MonitorCtnr.Service, ctnr.PlatformCtnr.Service, ctnr.StreamerCtnr.Service)
+	ctnr.MediaCtnr = media.NewMonolithicContainer(ctnr.MysqlWrapper)
+	ctnr.MonitorCtnr.Controller = monitorCtrl.NewControllerMono(ctnr.MonitorCtnr.Service, ctnr.PlatformCtnr.Service, ctnr.StreamerCtnr.Service, ctnr.MediaCtnr.Service)
 
 	ctnr.MonitorCtnr.Handler = ctnr.MonitorCtnr.NewHandler(ctnr.MonitorCtnr.Controller)
 	return nil
