@@ -4,7 +4,9 @@ import (
 	//"mntreamer/monitor/cmd/api/presentation/handler"
 	//mntreamerConfiguration "mntreamer/shared/configuration"
 
+	"mntreamer/platform/cmd/api/domain/business"
 	"mntreamer/platform/cmd/api/domain/service"
+	"mntreamer/platform/cmd/api/infrastructure/externalApi"
 	"mntreamer/platform/cmd/api/infrastructure/repository"
 	"mntreamer/platform/cmd/model"
 	"mntreamer/shared/database"
@@ -60,7 +62,11 @@ func (ctnr *MonolithicContainer) DefineGrpc() error {
 func (ctnr *MonolithicContainer) InitDependency(mysql any) error {
 	ctnrMysqlWrapper := mysql.(*database.MysqlWrapper)
 	ctnr.Repository = repository.NewRepository(ctnrMysqlWrapper)
-	ctnr.Service = service.NewService(ctnr.Repository)
+	businessMap := map[uint16]business.IBusiness{
+		1: business.NewChzzkBusiness(externalApi.NewChzzkClient()),
+	}
+
+	ctnr.Service = service.NewService(business.NewBusinessStrategy(businessMap), ctnr.Repository)
 	return nil
 }
 
