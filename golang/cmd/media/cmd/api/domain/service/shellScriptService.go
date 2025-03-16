@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"mntreamer/media/cmd/api/domain/business"
 	mntreamerModel "mntreamer/shared/model"
 	"os"
 	"os/exec"
@@ -13,16 +14,17 @@ import (
 )
 
 type ShellScriptService struct {
+	bizStrat *business.BusinessStrategy
 }
 
-func NewShellScriptService() *ShellScriptService {
-	return &ShellScriptService{}
+func NewShellScriptService(bizStrat *business.BusinessStrategy) *ShellScriptService {
+	return &ShellScriptService{bizStrat: bizStrat}
 }
 
-func (s *ShellScriptService) Download(media *mntreamerModel.Media, streamer *mntreamerModel.Streamer) error {
+func (s *ShellScriptService) Download(media *mntreamerModel.Media, channelName string, platformId uint16) error {
 	now := time.Now()
-	channelNameWithNoSpace := strings.ReplaceAll(streamer.ChannelName, " ", "")
-	path := s.getFilePath(now, channelNameWithNoSpace)
+	channelNameWithNoSpace := strings.ReplaceAll(channelName, " ", "")
+	path := s.getFilePath(now, platformId, channelNameWithNoSpace)
 	s.createFolder(path)
 	filename := s.getBaseFilename(now, channelNameWithNoSpace)
 	filename = s.getTitle(media.Title, filename)
@@ -79,8 +81,8 @@ func (s *ShellScriptService) createFolder(path string) error {
 	return nil
 }
 
-func (s *ShellScriptService) getFilePath(now time.Time, channelName string) string {
-	basePath := "/zzz/mntreamer/chzzk/"
+func (s *ShellScriptService) getFilePath(now time.Time, platformId uint16, channelName string) string {
+	basePath := s.bizStrat.GetDownloadPath(platformId)
 	year := fmt.Sprintf("%d", now.Year())
 	month := fmt.Sprintf("%02d", now.Month())
 	day := fmt.Sprintf("%02d", now.Day())

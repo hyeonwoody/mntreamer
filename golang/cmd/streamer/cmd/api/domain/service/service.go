@@ -40,3 +40,12 @@ func (s *Service) UpdateStatus(streamer *mntreamerModel.Streamer, status int8) {
 	streamer.Status = status
 	s.streamerRepo.Save(streamer)
 }
+
+func (s *Service) UpdateStatusWithId(platformId uint16, streamerId uint32, status int8) {
+	streamer, err := s.streamerRepo.FindByPlatformIdAndStreamerId(platformId, streamerId)
+	if err != nil {
+		return
+	}
+	streamer.Status = status
+	s.streamerRepo.Save(streamer)
+}

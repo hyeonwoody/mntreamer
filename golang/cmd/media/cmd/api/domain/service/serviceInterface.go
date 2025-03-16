@@ -5,5 +5,5 @@ import (
 )
 
 type IService interface {
-	Download(media *mntreamerModel.Media, streamer *mntreamerModel.Streamer) error
+	Download(media *mntreamerModel.Media, channelName string, platformId uint16) error
 }
