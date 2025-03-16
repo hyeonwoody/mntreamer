@@ -43,7 +43,7 @@ func (c *ControllerMono) Add(platformName, nickname string) error {
 func (c *ControllerMono) beginMonitor() {
 
 	for {
-		time.Sleep(5 * time.Second)
+		time.Sleep(20 * time.Millisecond)
 		go c.monitorProcess()
 	}
 }
