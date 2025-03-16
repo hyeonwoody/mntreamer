@@ -3,6 +3,7 @@ package controller
 import (
 	media "mntreamer/media/cmd/api/domain/service"
 	monitor "mntreamer/monitor/cmd/api/domain/service"
+	monitorModel "mntreamer/monitor/cmd/model"
 	platform "mntreamer/platform/cmd/api/domain/service"
 	mntreamerModel "mntreamer/shared/model"
 	streamer "mntreamer/streamer/cmd/api/domain/service"
@@ -43,36 +44,36 @@ func (c *ControllerMono) beginMonitor() {
 
 	for {
 		time.Sleep(5 * time.Second)
-		monitor, err := c.monitorSvc.Checkout()
-		if err != nil {
-			time.Sleep(200 * time.Millisecond)
-			continue
-		}
-
-		streamer, err := c.streamerSvc.FindByPlatformIdAndStreamerId(monitor.PlatformId, monitor.StreamerId)
-		if err != nil {
-			time.Sleep(100 * time.Millisecond)
-			continue
-		}
-
-		if !c.streamerSvc.CheckMonitoringEligibility(streamer) {
-			c.monitorSvc.AddMissCount(monitor)
-			time.Sleep(100 * time.Millisecond)
-			continue
-		}
-		c.streamerSvc.UpdateStatus(streamer, mntreamerModel.PROCESS)
-
-		media, err := c.platformSvc.GetLiveDetail(streamer)
-		if err != nil {
-			c.streamerSvc.UpdateStatus(streamer, mntreamerModel.IDLE)
-			time.Sleep(100 * time.Millisecond)
-			continue
-		}
-		c.streamerSvc.UpdateStatus(streamer, mntreamerModel.RECORDING)
-		go func() {
-			c.mediaSvc.Download(media, streamer)
-			c.streamerSvc.UpdateStatus(streamer, mntreamerModel.IDLE)
-			c.monitorSvc.ResetMissCount(monitor)
-		}()
+		go c.monitorProcess()
 	}
+}
+
+func (c *ControllerMono) monitorProcess() {
+	monitor, err := c.monitorSvc.Checkout()
+	if err != nil {
+		return
+	}
+
+	streamer, err := c.streamerSvc.FindByPlatformIdAndStreamerId(monitor.PlatformId, monitor.StreamerId)
+	if err != nil {
+		return
+	}
+
+	if !c.streamerSvc.CheckMonitoringEligibility(streamer) {
+		c.monitorSvc.AddMissCount(monitor)
+		return
+	}
+	c.streamerSvc.UpdateStatus(streamer, mntreamerModel.PROCESS)
+
+	media, err := c.platformSvc.GetLiveDetail(streamer)
+	if err != nil {
+		c.streamerSvc.UpdateStatus(streamer, mntreamerModel.IDLE)
+		return
+	}
+	c.streamerSvc.UpdateStatus(streamer, mntreamerModel.RECORDING)
+	go func(channelName string, monitor *monitorModel.StreamerMonitor, media *mntreamerModel.Media) {
+		c.mediaSvc.Download(media, streamer.ChannelName, monitor.PlatformId)
+		c.streamerSvc.UpdateStatusWithId(monitor.PlatformId, monitor.StreamerId, mntreamerModel.IDLE)
+		c.monitorSvc.ResetMissCount(monitor)
+	}(streamer.ChannelName, monitor, media)
 }
