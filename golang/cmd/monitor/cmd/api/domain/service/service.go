@@ -56,7 +56,7 @@ func (s *Service) UpdateCheckAt(tx *gorm.DB, streamerMonitor *model.StreamerMoni
 	s.repo.UpdateTx(tx, streamerMonitor)
 }
 
-func (s *Service) AddMissCount(streamerMonitor *model.StreamerMonitor) {
+func (s *Service) IncreaseMissCount(streamerMonitor *model.StreamerMonitor) {
 	streamerMonitor.MissCount++
 	s.repo.Save(streamerMonitor)
 }

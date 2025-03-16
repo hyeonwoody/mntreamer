@@ -60,7 +60,7 @@ func (c *ControllerMono) monitorProcess() {
 	}
 
 	if !c.streamerSvc.CheckMonitoringEligibility(streamer) {
-		c.monitorSvc.AddMissCount(monitor)
+		c.monitorSvc.IncreaseMissCount(monitor)
 		return
 	}
 	c.streamerSvc.UpdateStatus(streamer, mntreamerModel.PROCESS)
@@ -68,6 +68,7 @@ func (c *ControllerMono) monitorProcess() {
 	media, err := c.platformSvc.GetLiveDetail(streamer)
 	if err != nil {
 		c.streamerSvc.UpdateStatus(streamer, mntreamerModel.IDLE)
+		c.monitorSvc.IncreaseMissCount(monitor)
 		return
 	}
 	c.streamerSvc.UpdateStatus(streamer, mntreamerModel.RECORDING)
