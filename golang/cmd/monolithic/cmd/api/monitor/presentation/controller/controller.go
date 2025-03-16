@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"fmt"
 	media "mntreamer/media/cmd/api/domain/service"
 	monitor "mntreamer/monitor/cmd/api/domain/service"
 	platform "mntreamer/platform/cmd/api/domain/service"
@@ -43,6 +42,7 @@ func (c *ControllerMono) Add(platformName, nickname string) error {
 func (c *ControllerMono) beginMonitor() {
 
 	for {
+		time.Sleep(5 * time.Second)
 		monitor, err := c.monitorSvc.Checkout()
 		if err != nil {
 			time.Sleep(200 * time.Millisecond)
@@ -74,7 +74,5 @@ func (c *ControllerMono) beginMonitor() {
 			c.streamerSvc.UpdateStatus(streamer, mntreamerModel.IDLE)
 			c.monitorSvc.ResetMissCount(monitor)
 		}()
-		fmt.Sprintf(media.Title)
-		time.Sleep(5 * time.Second)
 	}
 }
