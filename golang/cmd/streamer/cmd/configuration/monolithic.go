@@ -4,9 +4,9 @@ import (
 	//"mntreamer/monitor/cmd/api/presentation/handler"
 	//mntreamerConfiguration "mntreamer/shared/configuration"
 	"mntreamer/shared/database"
+	mntreamerModel "mntreamer/shared/model"
 	"mntreamer/streamer/cmd/api/domain/service"
 	"mntreamer/streamer/cmd/api/infrastructure/repository"
-	"mntreamer/streamer/cmd/model"
 	"net/http"
 )
 
@@ -37,7 +37,7 @@ func (ctnr *MonolithicContainer) GetHttpHandler() http.Handler {
 func (ctnr *MonolithicContainer) DefineDatabase(mysqlWrapper any) error {
 	ctnrMysqlWrapper := mysqlWrapper.(*database.MysqlWrapper)
 
-	err := ctnrMysqlWrapper.Driver.AutoMigrate(&model.Streamer{})
+	err := ctnrMysqlWrapper.Driver.AutoMigrate(&mntreamerModel.Streamer{})
 	if err != nil {
 		return err
 	}
@@ -52,6 +52,7 @@ func (ctnr *MonolithicContainer) DefineGrpc() error {
 
 func (ctnr *MonolithicContainer) InitDependency(mysql any) error {
 	ctnr.Repository = repository.NewRepository(mysql.(*database.MysqlWrapper))
+
 	ctnr.Service = service.NewService(ctnr.Repository)
 	return nil
 }
@@ -59,6 +60,7 @@ func (ctnr *MonolithicContainer) InitDependency(mysql any) error {
 func NewMonolithicContainer(mysqlWrapper *database.MysqlWrapper) *MonolithicContainer {
 	ctnr := &MonolithicContainer{}
 	ctnr.InitVariable()
+	ctnr.DefineDatabase(mysqlWrapper)
 	ctnr.InitDependency(mysqlWrapper)
 	return ctnr
 }

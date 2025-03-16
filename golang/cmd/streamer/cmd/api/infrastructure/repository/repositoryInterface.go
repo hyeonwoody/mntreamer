@@ -8,9 +8,11 @@
 package repository
 
 import (
-	model "mntreamer/streamer/cmd/model"
+	mntreamerModel "mntreamer/shared/model"
 )
 
 type IRepository interface {
-	Save(*model.Streamer) (*model.Streamer, error)
+	Create(streamer *mntreamerModel.Streamer) (*mntreamerModel.Streamer, error)
+	Save(streamer *mntreamerModel.Streamer) (*mntreamerModel.Streamer, error)
+	FindByPlatformIdAndStreamerId(platformId uint16, streamerId uint32) (*mntreamerModel.Streamer, error)
 }
