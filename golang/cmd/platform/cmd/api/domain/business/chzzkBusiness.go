@@ -87,9 +87,16 @@ func renderQueryHtml(url string) string {
 }
 
 func (chzz *ChzzkBusiness) extractChannelName(doc *goquery.Document) (string, error) {
-	return doc.Find("strong[class^='channel_item_channel']").First().Text(), nil
+	channelElement := doc.Find("strong[class^='channel_item_channel']").First()
+	if channelElement.Length() == 0 {
+		return "", fmt.Errorf("channel element not found")
+	}
+	name := channelElement.Find("span[class^='name_text']").Text()
+	if name == "" {
+		return "", fmt.Errorf("channel name not found")
+	}
+	return name, nil
 }
-
 func (chzz *ChzzkBusiness) extractChannelId(doc *goquery.Document) (string, error) {
 	selection := doc.Find("a[class^='channel_item_wrapper']")
 	href, exist := selection.Attr("href")
