@@ -33,8 +33,6 @@ func (s *ShellScriptService) Download(media *mntreamerModel.Media, channelName s
 	defer cancel()
 	cmd := exec.CommandContext(ctx, "ffmpeg", "-i", media.VideoUrl, "-c", "copy", filePath)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
 	fmt.Printf("Running command: %v\n", cmd.Args)
 	cmd.Start()
 	done := make(chan error, 1)
