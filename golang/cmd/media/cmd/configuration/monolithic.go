@@ -1,6 +1,7 @@
 package configuration
 
 import (
+	"mntreamer/media/cmd/api/domain/business"
 	"mntreamer/media/cmd/api/domain/service"
 	"mntreamer/shared/database"
 	"net/http"
@@ -34,7 +35,11 @@ func (ctnr *MonolithicContainer) DefineGrpc() error {
 }
 
 func (ctnr *MonolithicContainer) InitDependency(mysql any) error {
-	ctnr.Service = service.NewShellScriptService()
+	businessMap := map[uint16]business.IBusiness{
+		1: business.NewChzzkBusiness(),
+	}
+
+	ctnr.Service = service.NewShellScriptService(business.NewBusinessStrategy(businessMap))
 	return nil
 }
 
