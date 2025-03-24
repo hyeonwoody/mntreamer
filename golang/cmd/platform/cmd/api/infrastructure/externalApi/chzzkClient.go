@@ -72,3 +72,7 @@ func (chzz *ChzzkClient) GetDocument(html string) (*goquery.Document, error) {
 	}
 	return doc, nil
 }
+
+func (chzz *ChzzkClient) Get(url string) ([]byte, error) {
+	panic("not implemented")
+}

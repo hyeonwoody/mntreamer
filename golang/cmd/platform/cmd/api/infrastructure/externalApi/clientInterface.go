@@ -7,6 +7,7 @@ import (
 )
 
 type IClient interface {
+	Get(url string) ([]byte, error)
 	getHtml(url string) (string, error)
 	GetDocument(html string) (*goquery.Document, error)
 	readHtml(req *http.Request) (string, error)
