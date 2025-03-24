@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"mntreamer/media/cmd/api/domain/business"
+	"mntreamer/media/cmd/api/domain/infrastructure/repository"
+	model "mntreamer/media/cmd/model"
 	mntreamerModel "mntreamer/shared/model"
 	"os"
 	"os/exec"
@@ -15,10 +17,11 @@ import (
 
 type ShellScriptService struct {
 	bizStrat *business.BusinessStrategy
+	repo     repository.IRepository
 }
 
-func NewShellScriptService(bizStrat *business.BusinessStrategy) *ShellScriptService {
-	return &ShellScriptService{bizStrat: bizStrat}
+func NewShellScriptService(bizStrat *business.BusinessStrategy, repo repository.IRepository) *ShellScriptService {
+	return &ShellScriptService{bizStrat: bizStrat, repo: repo}
 }
 
 func (s *ShellScriptService) Download(media *mntreamerModel.Media, channelName string, platformId uint16) error {
@@ -93,4 +96,8 @@ func (s *ShellScriptService) getBaseFilename(now time.Time, channelName string) 
 	year := now.Year() % 100 // Extract the last two digits of the year
 	date := fmt.Sprintf("%02d%02d%02d", year, now.Month(), now.Day())
 	return fmt.Sprintf("%s.%s", channelName, date)
+}
+
+func (s *ShellScriptService) Save(platformId uint16, streamerId uint32) {
+	s.repo.Save(model.NewMediaRecord(platformId, streamerId))
 }

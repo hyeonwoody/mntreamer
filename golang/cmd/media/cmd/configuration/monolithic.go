@@ -2,16 +2,21 @@ package configuration
 
 import (
 	"mntreamer/media/cmd/api/domain/business"
+	"mntreamer/media/cmd/api/domain/infrastructure/repository"
 	"mntreamer/media/cmd/api/domain/service"
+	"mntreamer/media/cmd/model"
 	"mntreamer/shared/database"
 	"net/http"
 )
 
 type MonolithicContainer struct {
-	Service service.IService
+	Variable     *Variable
+	Service      service.IService
+	MysqlWrapper *database.MysqlWrapper
 }
 
 func (ctnr *MonolithicContainer) InitVariable() error {
+	ctnr.Variable = NewVariable()
 	return nil
 }
 
@@ -27,6 +32,13 @@ func (ctnr *MonolithicContainer) GetHttpHandler() http.Handler {
 }
 
 func (ctnr *MonolithicContainer) DefineDatabase(mysqlWrapper any) error {
+	ctnrMysqlWrapper := mysqlWrapper.(*database.MysqlWrapper)
+
+	err := ctnrMysqlWrapper.Driver.AutoMigrate(&model.MediaRecord{})
+	if err != nil {
+		return err
+	}
+	ctnr.MysqlWrapper = ctnrMysqlWrapper
 	return nil
 }
 func (ctnr *MonolithicContainer) DefineGrpc() error {
@@ -39,13 +51,12 @@ func (ctnr *MonolithicContainer) InitDependency(mysql any) error {
 		1: business.NewChzzkBusiness(),
 	}
 
-	ctnr.Service = service.NewShellScriptService(business.NewBusinessStrategy(businessMap))
+	ctnr.Service = service.NewShellScriptService(business.NewBusinessStrategy(businessMap), repository.NewRepository(ctnr.MysqlWrapper))
 	return nil
 }
 
 func NewMonolithicContainer(mysqlWrapper *database.MysqlWrapper) *MonolithicContainer {
 	ctnr := &MonolithicContainer{}
-	ctnr.InitVariable()
 	ctnr.DefineDatabase(mysqlWrapper)
 	ctnr.InitDependency(mysqlWrapper)
 	return ctnr
