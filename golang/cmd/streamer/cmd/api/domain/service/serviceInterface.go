@@ -13,4 +13,6 @@ type IService interface {
 	CheckMonitoringEligibility(streamer *mntreamerModel.Streamer) bool
 	UpdateStatus(streamer *mntreamerModel.Streamer, status int8)
 	UpdateStatusWithId(platforId uint16, streamerId uint32, status int8)
+	UpdateLastRecordedAt(streamer *mntreamerModel.Streamer)
+	UpdateLastStreamAt(streamer *mntreamerModel.Streamer)
 }

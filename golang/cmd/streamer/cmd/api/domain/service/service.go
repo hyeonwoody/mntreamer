@@ -3,6 +3,7 @@ package service
 import (
 	mntreamerModel "mntreamer/shared/model"
 	"mntreamer/streamer/cmd/api/infrastructure/repository"
+	"time"
 )
 
 type Service struct {
@@ -47,5 +48,15 @@ func (s *Service) UpdateStatusWithId(platformId uint16, streamerId uint32, statu
 		return
 	}
 	streamer.Status = status
+	s.streamerRepo.Save(streamer)
+}
+
+func (s *Service) UpdateLastRecordedAt(streamer *mntreamerModel.Streamer) {
+	streamer.LastRecordedAt = time.Now()
+	s.streamerRepo.Save(streamer)
+}
+
+func (s *Service) UpdateLastStreamAt(streamer *mntreamerModel.Streamer) {
+	streamer.LastStreamAt = time.Now()
 	s.streamerRepo.Save(streamer)
 }
