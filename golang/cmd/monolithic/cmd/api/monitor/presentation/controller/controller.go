@@ -74,12 +74,12 @@ func (c *ControllerMono) monitorProcess() {
 	c.streamerSvc.UpdateStatus(streamer, mntreamerModel.RECORDING)
 	go func(channelName string, monitor *monitorModel.StreamerMonitor, media *mntreamerModel.Media) {
 		c.mediaSvc.Download(media, streamer.ChannelName, monitor.PlatformId)
-		go c.postStream(monitor.PlatformId, monitor.StreamerId, monitor)
+		go c.postStream(monitor)
 	}(streamer.ChannelName, monitor, media)
 }
 
-func (c *ControllerMono) postStream(platformId uint16, streamerId uint32, monitor *monitorModel.StreamerMonitor) {
-	go c.handleStreamerAfterStream(platformId, streamerId)
+func (c *ControllerMono) postStream(monitor *monitorModel.StreamerMonitor) {
+	go c.handleStreamerAfterStream(monitor)
 	go c.handleMonitorAfterStream(monitor)
 }
 
@@ -87,8 +87,8 @@ func (c *ControllerMono) handleMonitorAfterStream(monitor *monitorModel.Streamer
 	go c.monitorSvc.ResetMissCount(monitor)
 }
 
-func (c *ControllerMono) handleStreamerAfterStream(platformId uint16, streamerId uint32) {
-	streamer, err := c.streamerSvc.FindByPlatformIdAndStreamerId(platformId, streamerId)
+func (c *ControllerMono) handleStreamerAfterStream(monitor *monitorModel.StreamerMonitor) {
+	streamer, err := c.streamerSvc.FindByPlatformIdAndStreamerId(monitor.PlatformId, monitor.StreamerId)
 	if err != nil {
 		return
 	}
