@@ -81,6 +81,11 @@ func (c *ControllerMono) monitorProcess() {
 func (c *ControllerMono) postStream(monitor *monitorModel.StreamerMonitor) {
 	go c.handleStreamerAfterStream(monitor)
 	go c.handleMonitorAfterStream(monitor)
+	go c.handleMediaAfterStream(monitor)
+}
+
+func (c *ControllerMono) handleMediaAfterStream(monitor *monitorModel.StreamerMonitor) {
+	go c.mediaSvc.Save(monitor.PlatformId, monitor.StreamerId)
 }
 
 func (c *ControllerMono) handleMonitorAfterStream(monitor *monitorModel.StreamerMonitor) {
