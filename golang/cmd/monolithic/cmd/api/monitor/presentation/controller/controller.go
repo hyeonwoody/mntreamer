@@ -43,7 +43,7 @@ func (c *ControllerMono) Add(platformName, nickname string) error {
 func (c *ControllerMono) beginMonitor() {
 
 	for {
-		time.Sleep(20 * time.Millisecond)
+		time.Sleep(200 * time.Millisecond)
 		go c.monitorProcess()
 	}
 }
@@ -60,7 +60,7 @@ func (c *ControllerMono) monitorProcess() {
 	}
 
 	if !c.streamerSvc.CheckMonitoringEligibility(streamer) {
-		c.monitorSvc.IncreaseMissCount(monitor)
+		//c.monitorSvc.IncreaseMissCount(monitor)
 		return
 	}
 	c.streamerSvc.UpdateStatus(streamer, mntreamerModel.PROCESS)
