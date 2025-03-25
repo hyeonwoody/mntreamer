@@ -7,6 +7,7 @@ import (
 	platform "mntreamer/platform/cmd/api/domain/service"
 	mntreamerModel "mntreamer/shared/model"
 	streamer "mntreamer/streamer/cmd/api/domain/service"
+	"sync"
 	"time"
 )
 
@@ -79,17 +80,29 @@ func (c *ControllerMono) monitorProcess() {
 }
 
 func (c *ControllerMono) postStream(monitor *monitorModel.StreamerMonitor) {
-	go c.handleStreamerAfterStream(monitor)
-	go c.handleMonitorAfterStream(monitor)
-	go c.handleMediaAfterStream(monitor)
+	var wg sync.WaitGroup
+	wg.Add(3)
+	go func() {
+		defer wg.Done()
+		c.handleStreamerAfterStream(monitor)
+	}()
+	go func() {
+		defer wg.Done()
+		c.handleMonitorAfterStream(monitor)
+	}()
+	go func() {
+		defer wg.Done()
+		c.handleMediaAfterStream(monitor)
+	}()
+	wg.Wait()
 }
 
 func (c *ControllerMono) handleMediaAfterStream(monitor *monitorModel.StreamerMonitor) {
-	go c.mediaSvc.Save(monitor.PlatformId, monitor.StreamerId)
+	c.mediaSvc.Save(monitor.PlatformId, monitor.StreamerId)
 }
 
 func (c *ControllerMono) handleMonitorAfterStream(monitor *monitorModel.StreamerMonitor) {
-	go c.monitorSvc.ResetMissCount(monitor)
+	c.monitorSvc.ResetMissCount(monitor)
 }
 
 func (c *ControllerMono) handleStreamerAfterStream(monitor *monitorModel.StreamerMonitor) {
