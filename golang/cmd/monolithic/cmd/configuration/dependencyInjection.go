@@ -4,6 +4,7 @@ import (
 	"fmt"
 	media "mntreamer/media/cmd/configuration"
 	monitor "mntreamer/monitor/cmd/configuration"
+	mediaCtrl "mntreamer/monolithic/cmd/api/media/presentation/controller"
 	monitorCtrl "mntreamer/monolithic/cmd/api/monitor/presentation/controller"
 	platform "mntreamer/platform/cmd/configuration"
 	"mntreamer/shared/database"
@@ -38,9 +39,13 @@ func (ctnr *MonolithicContainer) RunRouter() error {
 }
 
 func (ctnr *MonolithicContainer) DefineRoute() error {
-	monitorGroup := ctnr.Router.Group("/monitor")
+	monitorGroup := ctnr.Router.Group("/api/v1/monitor")
 	{
 		monitorGroup.POST("", ctnr.MonitorCtnr.Handler.Add)
+	}
+	mediaGroup := ctnr.Router.Group("/api/v1/media")
+	{
+		mediaGroup.POST("", ctnr.MediaCtnr.Handler.GetFiles)
 	}
 	return nil
 }
@@ -65,8 +70,9 @@ func (ctnr *MonolithicContainer) InitDependency(dependency any) error {
 	ctnr.StreamerCtnr = streamer.NewMonolithicContainer(ctnr.MysqlWrapper)
 	ctnr.MediaCtnr = media.NewMonolithicContainer(ctnr.MysqlWrapper)
 	ctnr.MonitorCtnr.Controller = monitorCtrl.NewControllerMono(ctnr.MonitorCtnr.Service, ctnr.PlatformCtnr.Service, ctnr.StreamerCtnr.Service, ctnr.MediaCtnr.Service)
-
+	ctnr.MediaCtnr.Controller = mediaCtrl.NewControllerMono(ctnr.MediaCtnr.Service)
 	ctnr.MonitorCtnr.Handler = ctnr.MonitorCtnr.NewHandler(ctnr.MonitorCtnr.Controller)
+	ctnr.MediaCtnr.Handler = ctnr.MediaCtnr.NewHandler(ctnr.MediaCtnr.Controller)
 	return nil
 }
 
