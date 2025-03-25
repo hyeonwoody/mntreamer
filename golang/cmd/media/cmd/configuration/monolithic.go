@@ -7,6 +7,8 @@ import (
 	"mntreamer/media/cmd/model"
 	"mntreamer/shared/database"
 	"net/http"
+	"os"
+	"os/exec"
 )
 
 type MonolithicContainer struct {
@@ -55,8 +57,15 @@ func (ctnr *MonolithicContainer) InitDependency(mysql any) error {
 	return nil
 }
 
+func (ctnr *MonolithicContainer) SignalProcess() error {
+	cmd := exec.Command("bash", "-c", "ps -aux | grep ffmpeg | grep -v grep | awk '{print $2}' | xargs sudo kill -2")
+	cmd.Stderr = os.Stderr
+	return nil
+}
+
 func NewMonolithicContainer(mysqlWrapper *database.MysqlWrapper) *MonolithicContainer {
 	ctnr := &MonolithicContainer{}
+	ctnr.SignalProcess()
 	ctnr.DefineDatabase(mysqlWrapper)
 	ctnr.InitDependency(mysqlWrapper)
 	return ctnr
