@@ -8,6 +8,8 @@ import (
 	"mntreamer/streamer/cmd/api/domain/service"
 	"mntreamer/streamer/cmd/api/infrastructure/repository"
 	"net/http"
+
+	"gorm.io/gorm"
 )
 
 type MonolithicContainer struct {
@@ -40,6 +42,10 @@ func (ctnr *MonolithicContainer) DefineDatabase(mysqlWrapper any) error {
 	err := ctnrMysqlWrapper.Driver.AutoMigrate(&mntreamerModel.Streamer{})
 	if err != nil {
 		return err
+	}
+	result := ctnrMysqlWrapper.Driver.Session(&gorm.Session{AllowGlobalUpdate: true}).Model(&mntreamerModel.Streamer{}).Update("status", 1)
+	if result.Error != nil {
+		return result.Error
 	}
 
 	return nil
