@@ -11,6 +11,7 @@ import (
 	streamer "mntreamer/streamer/cmd/configuration"
 	"net/http"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -31,6 +32,13 @@ func (ctnr *MonolithicContainer) InitVariable() error {
 
 func (ctnr *MonolithicContainer) SetRouter(router any) {
 	ctnr.Router = router.(*gin.Engine)
+	ctnr.Router.Static("/media", "/zzz/mntreamer")
+	ctnr.Router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:5173"}, // Allow frontend domain
+		AllowMethods:     []string{"GET", "POST", "OPTIONS"},
+		AllowHeaders:     []string{"Content-Type", "Authorization"},
+		AllowCredentials: true,
+	}))
 }
 
 func (ctnr *MonolithicContainer) RunRouter() error {
