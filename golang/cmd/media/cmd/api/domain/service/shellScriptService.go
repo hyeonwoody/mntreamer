@@ -7,6 +7,7 @@ import (
 	"mntreamer/media/cmd/api/infrastructure/repository"
 	model "mntreamer/media/cmd/model"
 	mntreamerModel "mntreamer/shared/model"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -112,4 +113,28 @@ func (s *ShellScriptService) getBaseFilename(now time.Time, channelName string) 
 
 func (s *ShellScriptService) Save(platformId uint16, streamerId uint32) {
 	s.repo.Save(model.NewMediaRecord(platformId, streamerId))
+}
+
+func (s *ShellScriptService) GetFiles(filePath string) ([]model.FileInfo, error) {
+	files, err := os.ReadDir(filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	var fileInfos []model.FileInfo
+	for _, file := range files {
+		info, err := file.Info()
+		if err != nil {
+			continue
+		}
+		fullPath := filepath.Join(filePath, file.Name())
+		fileInfos = append(fileInfos, model.FileInfo{
+			Name:        file.Name(),
+			IsDirectory: file.IsDir(),
+			Path:        fullPath,
+			Size:        info.Size(),
+			UpdatedAt:   info.ModTime().UTC().Format(http.TimeFormat),
+		})
+	}
+	return fileInfos, nil
 }

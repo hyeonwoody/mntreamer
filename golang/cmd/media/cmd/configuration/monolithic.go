@@ -2,8 +2,10 @@ package configuration
 
 import (
 	"mntreamer/media/cmd/api/domain/business"
-	"mntreamer/media/cmd/api/domain/infrastructure/repository"
 	"mntreamer/media/cmd/api/domain/service"
+	"mntreamer/media/cmd/api/infrastructure/repository"
+	"mntreamer/media/cmd/api/presentation/controller"
+	"mntreamer/media/cmd/api/presentation/handler"
 	"mntreamer/media/cmd/model"
 	"mntreamer/shared/database"
 	"net/http"
@@ -14,7 +16,13 @@ import (
 type MonolithicContainer struct {
 	Variable     *Variable
 	Service      service.IService
+	Controller   controller.IController
+	Handler      handler.IHandler
 	MysqlWrapper *database.MysqlWrapper
+}
+
+func (ctnr *MonolithicContainer) NewHandler(controller controller.IController) handler.IHandler {
+	return handler.NewHandler(ctnr.Controller)
 }
 
 func (ctnr *MonolithicContainer) InitVariable() error {
@@ -52,8 +60,8 @@ func (ctnr *MonolithicContainer) InitDependency(mysql any) error {
 	businessMap := map[uint16]business.IBusiness{
 		1: business.NewChzzkBusiness(),
 	}
-
 	ctnr.Service = service.NewShellScriptService(business.NewBusinessStrategy(businessMap), repository.NewRepository(ctnr.MysqlWrapper))
+	ctnr.Handler = handler.NewHandler(ctnr.Controller)
 	return nil
 }
 
