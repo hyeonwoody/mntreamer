@@ -8,4 +8,5 @@ import (
 type IController interface {
 	api.IController
 	GetFiles(filePath string) ([]model.FileInfo, error)
+	GetFilesToRefine() ([]model.FileInfo, error)
 }

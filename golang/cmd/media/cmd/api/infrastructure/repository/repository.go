@@ -21,3 +21,13 @@ func (r *Repository) Save(mediaRecord *model.MediaRecord) (*model.MediaRecord, e
 
 	return mediaRecord, nil
 }
+
+func (r *Repository) FindByStatus(status int) ([]model.MediaRecord, error) {
+	var mediaRecords []model.MediaRecord
+	result := r.mysql.Driver.Where("status = ?", status).
+		Find(&mediaRecords)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return mediaRecords, nil
+}

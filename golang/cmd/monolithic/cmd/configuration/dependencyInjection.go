@@ -78,7 +78,7 @@ func (ctnr *MonolithicContainer) InitDependency(dependency any) error {
 	ctnr.StreamerCtnr = streamer.NewMonolithicContainer(ctnr.MysqlWrapper)
 	ctnr.MediaCtnr = media.NewMonolithicContainer(ctnr.MysqlWrapper)
 	ctnr.MonitorCtnr.Controller = monitorCtrl.NewControllerMono(ctnr.MonitorCtnr.Service, ctnr.PlatformCtnr.Service, ctnr.StreamerCtnr.Service, ctnr.MediaCtnr.Service)
-	ctnr.MediaCtnr.Controller = mediaCtrl.NewControllerMono(ctnr.MediaCtnr.Service)
+	ctnr.MediaCtnr.Controller = mediaCtrl.NewControllerMono(ctnr.MediaCtnr.Service, ctnr.StreamerCtnr.Service)
 	ctnr.MonitorCtnr.Handler = ctnr.MonitorCtnr.NewHandler(ctnr.MonitorCtnr.Controller)
 	ctnr.MediaCtnr.Handler = ctnr.MediaCtnr.NewHandler(ctnr.MediaCtnr.Controller)
 	return nil

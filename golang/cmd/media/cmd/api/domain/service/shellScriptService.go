@@ -95,6 +95,15 @@ func (s *ShellScriptService) createFolder(path string) error {
 	return nil
 }
 
+func (s *ShellScriptService) GetFilePath(mediaRecord *model.MediaRecord, channelName string) string {
+	basePath := s.bizStrat.GetDownloadPath(mediaRecord.PlatformId)
+	year := mediaRecord.Date.Format("2006")
+	month := mediaRecord.Date.Format("01")
+	day := mediaRecord.Date.Format("02")
+	filePath := filepath.Join(basePath, channelName, year, month, day)
+	return filePath
+}
+
 func (s *ShellScriptService) getFilePath(now time.Time, platformId uint16, channelName string) string {
 	basePath := s.bizStrat.GetDownloadPath(platformId)
 	year := fmt.Sprintf("%d", now.Year())
@@ -137,4 +146,34 @@ func (s *ShellScriptService) GetFiles(filePath string) ([]model.FileInfo, error)
 		})
 	}
 	return fileInfos, nil
+}
+
+func (s *ShellScriptService) GetM3u8(filePath string) ([]model.FileInfo, error) {
+	files, err := os.ReadDir(filePath)
+	if err != nil {
+		return nil, err
+	}
+	var fileInfos []model.FileInfo
+	for _, file := range files {
+		if strings.HasSuffix(file.Name(), ".m3u8") {
+			continue
+		}
+		info, err := file.Info()
+		if err != nil {
+			continue
+		}
+		fullPath := filepath.Join(filePath, file.Name())
+		fileInfos = append(fileInfos, model.FileInfo{
+			Name:        file.Name(),
+			IsDirectory: file.IsDir(),
+			Path:        fullPath,
+			Size:        info.Size(),
+			UpdatedAt:   info.ModTime().UTC().Format(http.TimeFormat),
+		})
+	}
+	return fileInfos, nil
+}
+
+func (s *ShellScriptService) GetMediaToRefine() ([]model.MediaRecord, error) {
+	return s.repo.FindByStatus(mntreamerModel.IDLE)
 }

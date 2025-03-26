@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"mntreamer/media/cmd/api/presentation/controller"
+	"strings"
 
 	"net/http"
 
@@ -10,11 +11,12 @@ import (
 )
 
 type Handler struct {
-	ctrl controller.IController
+	ctrl     controller.IController
+	basePath string
 }
 
-func NewHandler(ctrl controller.IController) *Handler {
-	return &Handler{ctrl: ctrl}
+func NewHandler(basePath string, ctrl controller.IController) *Handler {
+	return &Handler{basePath: basePath, ctrl: ctrl}
 }
 
 func (h *Handler) GetFiles(c *gin.Context) {
@@ -26,13 +28,23 @@ func (h *Handler) GetFiles(c *gin.Context) {
 		return
 	}
 
-	targetPath := req.Path
-	if targetPath == "" {
-		targetPath = "/"
+	var fileInfos interface{}
+	var err error
+
+	switch req.Path {
+	case "MEDIARECORD":
+		fileInfos, err = h.ctrl.GetFilesToRefine()
+	default:
+		if !strings.HasPrefix(req.Path, h.basePath) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Cannot access path outside base directory: %s", req.Path)})
+			return
+		}
+		fileInfos, err = h.ctrl.GetFiles(req.Path)
 	}
-	fileInfos, err := h.ctrl.GetFiles(targetPath)
+
 	if err != nil {
-		c.JSON(http.StatusBadRequest, fmt.Sprintf("failed to find path :%s", targetPath))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to retrieve files: %v", err)})
+		return
 	}
 	c.JSON(http.StatusOK, gin.H{"files": fileInfos})
 }

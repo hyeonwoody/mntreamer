@@ -6,4 +6,5 @@ import (
 
 type IRepository interface {
 	Save(mediaRecord *model.MediaRecord) (*model.MediaRecord, error)
+	FindByStatus(status int) ([]model.MediaRecord, error)
 }
