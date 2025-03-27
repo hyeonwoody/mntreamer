@@ -22,10 +22,11 @@ type ShellScriptService struct {
 	bizStrat      *platform.BusinessStrategy
 	m3u8ParserBiz parserBusiness.IBusiness
 	repo          repository.IRepository
+	rootPath      string
 }
 
-func NewShellScriptService(bizStrat *platform.BusinessStrategy, repo repository.IRepository, m3u8ParserBiz parserBusiness.IBusiness) *ShellScriptService {
-	return &ShellScriptService{bizStrat: bizStrat, m3u8ParserBiz: m3u8ParserBiz, repo: repo}
+func NewShellScriptService(bizStrat *platform.BusinessStrategy, repo repository.IRepository, m3u8ParserBiz parserBusiness.IBusiness, basePath string) *ShellScriptService {
+	return &ShellScriptService{bizStrat: bizStrat, m3u8ParserBiz: m3u8ParserBiz, repo: repo, rootPath: basePath}
 }
 
 func (s *ShellScriptService) Download(media *mntreamerModel.Media, channelName string, platformId uint16) error {

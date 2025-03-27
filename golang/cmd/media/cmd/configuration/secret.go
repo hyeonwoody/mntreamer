@@ -7,7 +7,7 @@ import (
 type Variable struct {
 	Database *mntreamerConfiguration.Database
 	Api      *mntreamerConfiguration.Api
-	BasePath string
+	RootPath string
 }
 
 func NewVariable() *Variable {
@@ -17,6 +17,6 @@ func NewVariable() *Variable {
 			Username: "root",
 			Password: "root",
 		},
-		BasePath: "/zzz/mntreamer",
+		RootPath: "/zzz/mntreamer",
 	}
 }

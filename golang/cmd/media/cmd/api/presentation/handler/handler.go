@@ -12,11 +12,11 @@ import (
 
 type Handler struct {
 	ctrl     controller.IController
-	basePath string
+	rootPath string
 }
 
-func NewHandler(basePath string, ctrl controller.IController) *Handler {
-	return &Handler{basePath: basePath, ctrl: ctrl}
+func NewHandler(rootPath string, ctrl controller.IController) *Handler {
+	return &Handler{rootPath: rootPath, ctrl: ctrl}
 }
 
 func (h *Handler) GetFiles(c *gin.Context) {
@@ -35,7 +35,7 @@ func (h *Handler) GetFiles(c *gin.Context) {
 	case "MEDIARECORD":
 		fileInfos, err = h.ctrl.GetFilesToRefine()
 	default:
-		if !strings.HasPrefix(req.Path, h.basePath) {
+		if !strings.HasPrefix(req.Path, h.rootPath) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Cannot access path outside base directory: %s", req.Path)})
 			return
 		}

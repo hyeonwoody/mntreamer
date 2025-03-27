@@ -24,7 +24,7 @@ type MonolithicContainer struct {
 }
 
 func (ctnr *MonolithicContainer) NewHandler(controller controller.IController) handler.IHandler {
-	return handler.NewHandler(ctnr.Variable.BasePath, ctnr.Controller)
+	return handler.NewHandler(ctnr.Variable.RootPath, ctnr.Controller)
 }
 
 func (ctnr *MonolithicContainer) InitVariable() error {
@@ -63,8 +63,8 @@ func (ctnr *MonolithicContainer) InitDependency(mysql any) error {
 		1: business.NewChzzkBusiness(),
 	}
 	m3u8Biz := parser.NewM3u8Business()
-	ctnr.Service = service.NewShellScriptService(platform.NewBusinessStrategy(businessMap), repository.NewRepository(ctnr.MysqlWrapper), m3u8Biz)
-	ctnr.Handler = handler.NewHandler(ctnr.Variable.BasePath, ctnr.Controller)
+	ctnr.Service = service.NewShellScriptService(platform.NewBusinessStrategy(businessMap), repository.NewRepository(ctnr.MysqlWrapper), m3u8Biz, ctnr.Variable.RootPath)
+	ctnr.Handler = handler.NewHandler(ctnr.Variable.RootPath, ctnr.Controller)
 	return nil
 }
 
