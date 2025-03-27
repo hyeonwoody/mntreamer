@@ -22,6 +22,12 @@ func (c *ControllerMono) GetFiles(filePath string) ([]model.FileInfo, error) {
 	return c.svc.GetFiles(filePath)
 }
 
+func (c *ControllerMono) GetTargetDuration(path string) (float64, error) {
+	playlist, _ := c.svc.Decode(path)
+	mpl, _ := playlist.(*model.MediaPlaylist)
+	return mpl.TargetDuration, nil
+}
+
 func (c *ControllerMono) GetFilesToRefine() ([]model.FileInfo, error) {
 	mediaList, err := c.svc.GetMediaToRefine()
 	if err != nil {

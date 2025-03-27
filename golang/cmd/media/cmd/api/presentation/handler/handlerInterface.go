@@ -11,4 +11,5 @@ type IHandler interface {
 	GetFiles(c *gin.Context)
 	Stream(c *gin.Context)
 	Excise(c *gin.Context)
+	GetTargetDuration(c *gin.Context)
 }

@@ -49,6 +49,15 @@ func (h *Handler) GetFiles(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"files": fileInfos})
 }
 
+func (h *Handler) GetTargetDuration(c *gin.Context) {
+	filePath := c.Param("filePath")
+	targetDuration, err := h.ctrl.GetTargetDuration(filePath)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
+	c.JSON(http.StatusOK, gin.H{"targetDuration": targetDuration})
+}
+
 func (h *Handler) Stream(c *gin.Context) {
 	filePath := c.Param("filePath")
 
