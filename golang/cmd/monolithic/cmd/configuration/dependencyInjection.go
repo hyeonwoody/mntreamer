@@ -36,7 +36,7 @@ func (ctnr *MonolithicContainer) SetRouter(router any) {
 	front := fmt.Sprintf("http://%s:%d", ctnr.Variable.Frontend.Ip, ctnr.Variable.Frontend.Port)
 	ctnr.Router.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{front}, // Allow frontend domain
-		AllowMethods:     []string{"GET", "POST", "OPTIONS", "PATCH"},
+		AllowMethods:     []string{"GET", "POST", "OPTIONS", "PATCH", "DELETE"},
 		AllowHeaders:     []string{"Content-Type", "Authorization"},
 		AllowCredentials: true,
 	}))
@@ -58,6 +58,7 @@ func (ctnr *MonolithicContainer) DefineRoute() error {
 		mediaGroup.GET("/stream/*filePath", ctnr.MediaCtnr.Handler.Stream)
 		mediaGroup.GET("/target-duration/*filePath", ctnr.MediaCtnr.Handler.GetTargetDuration)
 		mediaGroup.PATCH("", ctnr.MediaCtnr.Handler.Excise)
+		mediaGroup.DELETE("/*filePath", ctnr.MediaCtnr.Handler.Delete)
 	}
 	return nil
 }
@@ -82,7 +83,7 @@ func (ctnr *MonolithicContainer) InitDependency(dependency any) error {
 	ctnr.StreamerCtnr = streamer.NewMonolithicContainer(ctnr.MysqlWrapper)
 	ctnr.MediaCtnr = media.NewMonolithicContainer(ctnr.MysqlWrapper)
 	ctnr.MonitorCtnr.Controller = monitorCtrl.NewControllerMono(ctnr.MonitorCtnr.Service, ctnr.PlatformCtnr.Service, ctnr.StreamerCtnr.Service, ctnr.MediaCtnr.Service)
-	ctnr.MediaCtnr.Controller = mediaCtrl.NewControllerMono(ctnr.MediaCtnr.Service, ctnr.StreamerCtnr.Service)
+	ctnr.MediaCtnr.Controller = mediaCtrl.NewControllerMono(ctnr.MediaCtnr.Service, ctnr.PlatformCtnr.Service, ctnr.StreamerCtnr.Service)
 	ctnr.MonitorCtnr.Handler = ctnr.MonitorCtnr.NewHandler(ctnr.MonitorCtnr.Controller)
 	ctnr.MediaCtnr.Handler = ctnr.MediaCtnr.NewHandler(ctnr.MediaCtnr.Controller)
 	return nil

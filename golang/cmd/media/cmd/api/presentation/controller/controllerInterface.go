@@ -12,4 +12,5 @@ type IController interface {
 	GetFilesToRefine() ([]model.FileInfo, error)
 	Stream(filePath string) (string, error)
 	Excise(path string, begin float64, end float64) error
+	Delete(filePath string) error
 }

@@ -12,4 +12,5 @@ type IHandler interface {
 	Stream(c *gin.Context)
 	Excise(c *gin.Context)
 	GetTargetDuration(c *gin.Context)
+	Delete(c *gin.Context)
 }

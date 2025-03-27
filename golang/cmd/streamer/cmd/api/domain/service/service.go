@@ -30,6 +30,10 @@ func (s *Service) FindByPlatformIdAndStreamerId(platformId uint16, streamerId ui
 	return s.streamerRepo.FindByPlatformIdAndStreamerId(platformId, streamerId)
 }
 
+func (s *Service) FindByPlatformIdAndChannelName(platformId uint16, channelName string) (*mntreamerModel.Streamer, error){
+	return s.streamerRepo.FindByPlatformIdAndChannelName(platformId, channelName)
+}
+
 func (s *Service) CheckMonitoringEligibility(streamer *mntreamerModel.Streamer) bool {
 	if streamer.Status == mntreamerModel.IDLE {
 		return true

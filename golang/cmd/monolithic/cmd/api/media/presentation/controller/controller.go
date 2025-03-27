@@ -15,8 +15,8 @@ type ControllerMono struct {
 	streamerSvc streamer.IService
 }
 
-func NewControllerMono(svc media.IService, streamerSvc streamer.IService) *ControllerMono {
-	return &ControllerMono{svc: svc, streamerSvc: streamerSvc}
+func NewControllerMono(svc media.IService, platformSvc platform.IService, streamerSvc streamer.IService) *ControllerMono {
+	return &ControllerMono{svc: svc, platformSvc: platformSvc, streamerSvc: streamerSvc}
 }
 
 func (c *ControllerMono) GetFiles(filePath string) ([]model.FileInfo, error) {
@@ -73,4 +73,16 @@ func (c *ControllerMono) Stream(filePath string) (string, error) {
 
 func (c *ControllerMono) Excise(path string, begin float64, end float64) error {
 	return c.svc.Excise(path, begin, end)
+}
+
+func (c *ControllerMono) Delete(filePath string) error {
+	platformName, err := c.svc.GetPlatformNameByFilePath(filePath)
+	channelName, err := c.svc.GetChannelNameByFilePath(filePath)
+	platformId, _ := c.platformSvc.GetPlatformIdByName(platformName)
+	streamer, err := c.streamerSvc.FindByPlatformIdAndChannelName(platformId, channelName)
+	_, err = c.svc.Delete(streamer.PlatformId, streamer.Id, filePath)
+	if err != nil {
+		return err
+	}
+	return nil
 }

@@ -86,3 +86,11 @@ func (h *Handler) Excise(c *gin.Context) {
 	}
 	c.Status(http.StatusOK)
 }
+
+func (h *Handler) Delete(c *gin.Context) {
+	filePath := c.Param("filePath")
+	if err := h.ctrl.Delete(filePath); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
+	c.Status(http.StatusOK)
+}

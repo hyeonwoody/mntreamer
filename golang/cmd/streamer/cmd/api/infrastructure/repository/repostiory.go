@@ -65,3 +65,17 @@ func (r *Repository) FindByPlatformIdAndStreamerId(platformId uint16, streamerId
 
 	return &streamer, nil
 }
+
+func (r *Repository) FindByPlatformIdAndChannelName(platformId uint16, channelName string) (*mntreamerModel.Streamer, error) {
+	var streamer mntreamerModel.Streamer
+	result := r.mysql.Driver.Where("platform_id = ? AND channel_name = ?", platformId, channelName).First(&streamer)
+
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, result.Error
+	}
+
+	return &streamer, nil
+}

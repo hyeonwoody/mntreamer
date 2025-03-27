@@ -15,4 +15,5 @@ type IRepository interface {
 	Create(streamer *mntreamerModel.Streamer) (*mntreamerModel.Streamer, error)
 	Save(streamer *mntreamerModel.Streamer) (*mntreamerModel.Streamer, error)
 	FindByPlatformIdAndStreamerId(platformId uint16, streamerId uint32) (*mntreamerModel.Streamer, error)
+	FindByPlatformIdAndChannelName(platformId uint16, channelName string) (*mntreamerModel.Streamer, error)
 }

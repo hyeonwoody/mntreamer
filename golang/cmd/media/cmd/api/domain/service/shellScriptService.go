@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -32,18 +33,18 @@ func NewShellScriptService(bizStrat *platform.BusinessStrategy, repo repository.
 func (s *ShellScriptService) Download(media *mntreamerModel.Media, channelName string, platformId uint16) error {
 	now := time.Now()
 	channelNameWithNoSpace := strings.ReplaceAll(channelName, " ", "")
-	path := s.getFilePath(now, platformId, channelNameWithNoSpace)
+	path := s.getFilePath(now, platformId, channelName)
 	s.createFolder(path)
 	filename := s.getBaseFilename(now, channelNameWithNoSpace)
 	filename = s.getTitle(media.Title, filename)
-	filePath := s.getNumbering(path, filename)
+	filePath := s.getSequence(path, filename)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	cmd := exec.CommandContext(ctx,
 		"ffmpeg",
-		"-i",
 		media.VideoUrl,
+		"-i",
 		"-c", "copy",
 		"-f", "segment",
 		"-segment_time", "60",
@@ -78,8 +79,8 @@ func (s *ShellScriptService) getTitle(title string, filename string) string {
 	return filename
 }
 
-func (s *ShellScriptService) getNumbering(path string, filename string) string {
-	cnt := 1
+func (s *ShellScriptService) getSequence(path string, filename string) string {
+	cnt := 0
 	filePath := filepath.Join(path, fmt.Sprintf("%s.%d.m3u8", filename, cnt))
 	for {
 		if _, err := os.Stat(filePath); os.IsNotExist(err) {
@@ -106,6 +107,45 @@ func (s *ShellScriptService) GetFilePath(mediaRecord *model.MediaRecord, channel
 	day := mediaRecord.Date.Format("02")
 	filePath := filepath.Join(basePath, channelName, year, month, day)
 	return filePath
+}
+
+func (s *ShellScriptService) getRelativePath(filePath string) string {
+	relativePath, err := filepath.Rel(s.rootPath, filePath)
+	if err != nil {
+		return ""
+	}
+	return relativePath
+}
+
+func (s *ShellScriptService) GetPlatformNameByFilePath(filePath string) (string, error) {
+	relPath := s.getRelativePath(filePath)
+	if len(relPath) == 0 {
+		return "", fmt.Errorf("invalid file path")
+	}
+	return strings.Split(relPath, "/")[0], nil
+}
+
+func (s *ShellScriptService) GetChannelNameByFilePath(filePath string) (string, error) {
+	relPath := s.getRelativePath(filePath)
+	if len(relPath) == 0 {
+		return "", fmt.Errorf("invalid file path")
+	}
+	return strings.Split(relPath, "/")[1], nil
+}
+
+func (s *ShellScriptService) GetDateByFilePath(fullPath string) (time.Time, error) {
+	date := strings.Split(filepath.Base(fullPath), ".")[1]
+	return time.Parse("060102", date)
+}
+
+func (s *ShellScriptService) GetSequenceByFilePath(fullPath string) (uint16, error) {
+	filenameComponent := strings.Split(filepath.Base(fullPath), ".")
+	sequenceStr := filenameComponent[len(filenameComponent)-2]
+	sequence, err := strconv.ParseUint(sequenceStr, 10, 16)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse sequence number: %w", err)
+	}
+	return uint16(sequence), nil
 }
 
 func (s *ShellScriptService) getFilePath(now time.Time, platformId uint16, channelName string) string {
@@ -152,11 +192,45 @@ func (s *ShellScriptService) GetFiles(filePath string) ([]model.FileInfo, error)
 	return fileInfos, nil
 }
 
-func (s *ShellScriptService) GetM3u8(filePath string) ([]model.FileInfo, error) {
+func (s *ShellScriptService) GetMediaFiles(fullPath string) ([]model.FileInfo, error) {
+	filePath := filepath.Dir(fullPath)
 	files, err := os.ReadDir(filePath)
 	if err != nil {
 		return nil, err
 	}
+	filename := filepath.Base(fullPath)
+	filename = strings.TrimSuffix(filename, filepath.Ext(filename))
+	var fileInfos []model.FileInfo
+	for _, file := range files {
+		info, err := file.Info()
+		if err != nil {
+			continue
+		}
+		if file.IsDir() {
+			continue
+		}
+		if strings.HasPrefix(file.Name(), filename) {
+			fullPath := filepath.Join(filePath, file.Name())
+			fileInfos = append(fileInfos, model.FileInfo{
+				Name:        file.Name(),
+				IsDirectory: file.IsDir(),
+				Path:        fullPath,
+				Size:        info.Size(),
+				UpdatedAt:   info.ModTime().UTC().Format(http.TimeFormat),
+			})
+		}
+	}
+	return fileInfos, nil
+}
+
+func (s *ShellScriptService) GetM3u8(filePath string, sequence uint16) ([]model.FileInfo, error) {
+	files, err := os.ReadDir(filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	//TODO
+	//suffix := fmt.Sprintf(".m3u8", sequence)
 	var fileInfos []model.FileInfo
 	for _, file := range files {
 		if !strings.HasSuffix(file.Name(), ".m3u8") {
@@ -266,4 +340,29 @@ func (s *ShellScriptService) WriteBufferToFile(path string, buf model.IBuffer) e
 		return fmt.Errorf("🛑failed to write updated playlist: %w", err)
 	}
 	return nil
+}
+
+func (s *ShellScriptService) Delete(platformId uint16, streamerId uint32, fullPath string) (*model.MediaRecord, error) {
+	files, err := s.GetMediaFiles(fullPath)
+	if err != nil {
+		return nil, err
+	}
+	for _, file := range files {
+		if err := os.Remove(file.Path); err != nil && !os.IsNotExist(err) {
+			return nil, fmt.Errorf("🛑failed to delete media %s: %w", file.Path, err)
+		}
+	}
+	date, err := s.GetDateByFilePath(fullPath)
+	if err != nil {
+		return nil, err
+	}
+	sequence, err := s.GetSequenceByFilePath(fullPath)
+	if err != nil {
+		return nil, err
+	}
+	terminated, err := s.repo.Terminate(platformId, streamerId, date, sequence)
+	if err != nil {
+		return nil, err
+	}
+	return terminated, nil
 }
