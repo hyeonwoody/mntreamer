@@ -33,9 +33,10 @@ func (ctnr *MonolithicContainer) InitVariable() error {
 func (ctnr *MonolithicContainer) SetRouter(router any) {
 	ctnr.Router = router.(*gin.Engine)
 	ctnr.Router.Static("/media", "/zzz/mntreamer")
+	front := fmt.Sprintf("http://%s:%d", ctnr.Variable.Frontend.Ip, ctnr.Variable.Frontend.Port)
 	ctnr.Router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173"}, // Allow frontend domain
-		AllowMethods:     []string{"GET", "POST", "OPTIONS"},
+		AllowOrigins:     []string{front}, // Allow frontend domain
+		AllowMethods:     []string{"GET", "POST", "OPTIONS", "PATCH"},
 		AllowHeaders:     []string{"Content-Type", "Authorization"},
 		AllowCredentials: true,
 	}))
@@ -54,6 +55,9 @@ func (ctnr *MonolithicContainer) DefineRoute() error {
 	mediaGroup := ctnr.Router.Group("/api/v1/media")
 	{
 		mediaGroup.POST("", ctnr.MediaCtnr.Handler.GetFiles)
+		mediaGroup.GET("/stream/*filePath", ctnr.MediaCtnr.Handler.Stream)
+		mediaGroup.GET("/target-duration/*filePath", ctnr.MediaCtnr.Handler.GetTargetDuration)
+		mediaGroup.PATCH("", ctnr.MediaCtnr.Handler.Excise)
 	}
 	return nil
 }

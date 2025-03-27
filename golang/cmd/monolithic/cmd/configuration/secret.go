@@ -7,6 +7,7 @@ import (
 type Variable struct {
 	Database *mntreamerConfiguration.Database
 	Api      *mntreamerConfiguration.Api
+	Frontend *mntreamerConfiguration.Api
 }
 
 func NewVariable() *Variable {
@@ -19,6 +20,10 @@ func NewVariable() *Variable {
 		Api: &mntreamerConfiguration.Api{
 			Ip:   "localhost",
 			Port: 11000,
+		},
+		Frontend: &mntreamerConfiguration.Api{
+			Ip:   "localhost",
+			Port: 11002,
 		},
 	}
 }
