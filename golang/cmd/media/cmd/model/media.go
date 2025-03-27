@@ -6,10 +6,11 @@ import (
 )
 
 type MediaRecord struct {
-	PlatformId uint16 `gorm:"primaryKey;autoIncrement:false;uniqueIndex:idx_platform_streamer_date"`
-	StreamerId uint32 `gorm:"primaryKey;autoIncrement:false;uniqueIndex:idx_platform_streamer_date"`
+	PlatformId uint16 `gorm:"primaryKey;autoIncrement:false;uniqueIndex:idx_platform_streamer_date_sequence"`
+	StreamerId uint32 `gorm:"primaryKey;autoIncrement:false;uniqueIndex:idx_platform_streamer_date_sequence"`
 	Status     int8
-	Date       time.Time `gorm:"primaryKey;autoIncrement:false;uniqueIndex:idx_platform_streamer_date"`
+	Date       time.Time `gorm:"primaryKey;autoIncrement:false;uniqueIndex:idx_platform_streamer_date_sequence"`
+	Sequence   uint16    `gorm:"primaryKey;autoIncrement:true;uniqueIndex:idx_platform_streamer_date_sequence"`
 }
 
 func (MediaRecord) TableName() string {
