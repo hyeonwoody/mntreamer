@@ -230,20 +230,18 @@ func (s *ShellScriptService) Excise(path string, begin float64, end float64) err
 		if err != nil {
 			return fmt.Errorf("🛑failed to get segment %d: %w", i, err)
 		}
-		duration += segment.Duration
-		if duration >= begin && duration < end {
+		if begin <= duration && duration < end {
 			segmentsToRemove = append(segmentsToRemove, i)
 		}
+		duration += segment.Duration
 	}
 	if len(segmentsToRemove) == 0 {
 		return fmt.Errorf("🛑nothing to remove")
 	}
 
 	filePath := filepath.Dir(path)
-	discontinueSegment, _ := mpl.GetSegment(segmentsToRemove[len(segmentsToRemove)-1] + 1)
-	discontinueSegment.SetDiscontinuity(true)
-	for cnt, i := range segmentsToRemove {
-		removeIdx := uint(int(i) - cnt)
+	removeIdx := segmentsToRemove[0]
+	for range segmentsToRemove {
 		segment, _ := mpl.GetSegment(removeIdx)
 		segmentPath := filepath.Join(filePath, segment.Uri)
 		if err := os.Remove(segmentPath); err != nil && !os.IsNotExist(err) {
@@ -251,6 +249,7 @@ func (s *ShellScriptService) Excise(path string, begin float64, end float64) err
 		}
 		mpl.PullSegment(removeIdx)
 	}
+	mpl.SetDiscontinuityWithIndex(removeIdx, true)
 
 	buf := s.m3u8ParserBiz.Encode(mpl)
 	return s.WriteBufferToFile(path, buf)
