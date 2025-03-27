@@ -189,24 +189,31 @@ func (s *ShellScriptService) Stream(fullPath string) (string, error) {
 	return fullPath, nil
 }
 
-func (s *ShellScriptService) Excise(path string, begin float64, end float64) error {
+func (s *ShellScriptService) Decode(path string) (interface{}, error) {
 	file, err := os.OpenFile(path, os.O_RDONLY, 0)
 	if err != nil {
-		return fmt.Errorf("🛑failed to open file %s: %w", path, err)
+		return nil, fmt.Errorf("🛑failed to open file %s: %w", path, err)
 	}
 	defer file.Close()
 
 	playList, err := s.m3u8ParserBiz.Decode(bufio.NewReader(file))
 	if err != nil {
-		return fmt.Errorf("🛑failed to decode file %s: %w", path, err)
+		return nil, fmt.Errorf("🛑failed to decode file %s: %w", path, err)
 	}
-	file.Close()
-	mediaPlayList := playList.(*model.MediaPlaylist)
-	var duration float64
+	return playList, nil
+}
 
+func (s *ShellScriptService) Excise(path string, begin float64, end float64) error {
+	var mpl *model.MediaPlaylist
+	playlist, err := s.Decode(path)
+	mpl, ok := playlist.(*model.MediaPlaylist)
+	if !ok {
+		return fmt.Errorf("🛑decoded playlist is unknown")
+	}
+	var duration float64
 	segmentsToRemove := []uint{}
 	for i := uint(0); duration < end; i++ {
-		segment, err := mediaPlayList.GetSegment(i)
+		segment, err := mpl.GetSegment(i)
 		if err != nil {
 			return fmt.Errorf("🛑failed to get segment %d: %w", i, err)
 		}
@@ -217,20 +224,21 @@ func (s *ShellScriptService) Excise(path string, begin float64, end float64) err
 	}
 
 	filePath := filepath.Dir(path)
-	discontinueSegment, _ := mediaPlayList.GetSegment(segmentsToRemove[len(segmentsToRemove)-1] + 1)
+	discontinueSegment, _ := mpl.GetSegment(segmentsToRemove[len(segmentsToRemove)-1] + 1)
 	discontinueSegment.SetDiscontinuity(true)
 	for cnt, i := range segmentsToRemove {
 		removeIdx := uint(int(i) - cnt)
-		segment, _ := mediaPlayList.GetSegment(removeIdx)
+		segment, _ := mpl.GetSegment(removeIdx)
 		segmentPath := filepath.Join(filePath, segment.Uri)
 		if err := os.Remove(segmentPath); err != nil {
 			return fmt.Errorf("🛑failed to delete segment %s: %w", segment.Uri, err)
 		}
-		mediaPlayList.PullSegment(removeIdx)
+		mpl.PullSegment(removeIdx)
 	}
 
-	buf := s.m3u8ParserBiz.Encode(mediaPlayList)
-	file, err = os.OpenFile(path, os.O_WRONLY|os.O_TRUNC, 0644)
+	buf := s.m3u8ParserBiz.Encode(mpl)
+
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		return fmt.Errorf("🛑failed to open file %s for writing: %w", path, err)
 	}
