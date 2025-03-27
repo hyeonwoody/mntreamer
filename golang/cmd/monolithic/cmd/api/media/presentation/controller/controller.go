@@ -51,3 +51,11 @@ func (c *ControllerMono) GetFilesToRefine() ([]model.FileInfo, error) {
 	wg.Wait()
 	return m3u8List, nil
 }
+
+func (c *ControllerMono) Stream(filePath string) (string, error) {
+	return c.svc.Stream(filePath)
+}
+
+func (c *ControllerMono) Excise(path string, begin float64, end float64) error {
+	return c.svc.Excise(path, begin, end)
+}

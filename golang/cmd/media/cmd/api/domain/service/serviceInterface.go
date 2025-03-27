@@ -12,4 +12,6 @@ type IService interface {
 	GetM3u8(filePath string) ([]model.FileInfo, error)
 	GetMediaToRefine() ([]model.MediaRecord, error)
 	GetFilePath(mediaRecord *model.MediaRecord, channelName string) string
+	Stream(filePath string) (string, error)
+	Excise(path string, begin float64, end float64) error
 }

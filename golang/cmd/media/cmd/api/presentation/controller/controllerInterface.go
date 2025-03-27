@@ -9,4 +9,6 @@ type IController interface {
 	api.IController
 	GetFiles(filePath string) ([]model.FileInfo, error)
 	GetFilesToRefine() ([]model.FileInfo, error)
+	Stream(filePath string) (string, error)
+	Excise(path string, begin float64, end float64) error
 }

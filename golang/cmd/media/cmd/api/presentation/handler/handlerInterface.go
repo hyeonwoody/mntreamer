@@ -9,4 +9,6 @@ import (
 type IHandler interface {
 	api.IHandler
 	GetFiles(c *gin.Context)
+	Stream(c *gin.Context)
+	Excise(c *gin.Context)
 }

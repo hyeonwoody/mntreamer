@@ -20,7 +20,7 @@ type ControllerMono struct {
 
 func NewControllerMono(monitorSvc monitor.IService, platformSvc platform.IService, streamerSvc streamer.IService, mediaSvc media.IService) *ControllerMono {
 	ctrl := &ControllerMono{monitorSvc: monitorSvc, platformSvc: platformSvc, streamerSvc: streamerSvc, mediaSvc: mediaSvc}
-	go ctrl.beginMonitor()
+	//go ctrl.beginMonitor()
 	return ctrl
 }
 

@@ -48,3 +48,32 @@ func (h *Handler) GetFiles(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"files": fileInfos})
 }
+
+func (h *Handler) Stream(c *gin.Context) {
+	filePath := c.Param("filePath")
+
+	if fullPath, err := h.ctrl.Stream(filePath); err == nil {
+		c.Header("Content-Type", "application/vnd.apple.mpegurl")
+		c.File(fullPath)
+		return
+	}
+	c.String(http.StatusNotFound, "File not found")
+}
+
+func (h *Handler) Excise(c *gin.Context) {
+	var req struct {
+		FullPath string  `json:"fullPath"`
+		Begin    float64 `json:"begin"`
+		End      float64 `json:"end"`
+	}
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := h.ctrl.Excise(req.FullPath, req.Begin, req.End); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.Status(http.StatusOK)
+}

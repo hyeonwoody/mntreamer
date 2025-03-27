@@ -1,12 +1,13 @@
 package service
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	parserBusiness "mntreamer/media/cmd/api/domain/business/parser"
 	platform "mntreamer/media/cmd/api/domain/business/platform"
 	"mntreamer/media/cmd/api/infrastructure/repository"
-	model "mntreamer/media/cmd/model"
+	"mntreamer/media/cmd/model"
 	mntreamerModel "mntreamer/shared/model"
 	"net/http"
 	"os"
@@ -18,12 +19,13 @@ import (
 )
 
 type ShellScriptService struct {
-	bizStrat *business.BusinessStrategy
-	repo     repository.IRepository
+	bizStrat      *platform.BusinessStrategy
+	m3u8ParserBiz parserBusiness.IBusiness
+	repo          repository.IRepository
 }
 
-func NewShellScriptService(bizStrat *business.BusinessStrategy, repo repository.IRepository) *ShellScriptService {
-	return &ShellScriptService{bizStrat: bizStrat, repo: repo}
+func NewShellScriptService(bizStrat *platform.BusinessStrategy, repo repository.IRepository, m3u8ParserBiz parserBusiness.IBusiness) *ShellScriptService {
+	return &ShellScriptService{bizStrat: bizStrat, m3u8ParserBiz: m3u8ParserBiz, repo: repo}
 }
 
 func (s *ShellScriptService) Download(media *mntreamerModel.Media, channelName string, platformId uint16) error {
@@ -156,7 +158,7 @@ func (s *ShellScriptService) GetM3u8(filePath string) ([]model.FileInfo, error) 
 	}
 	var fileInfos []model.FileInfo
 	for _, file := range files {
-		if strings.HasSuffix(file.Name(), ".m3u8") {
+		if !strings.HasSuffix(file.Name(), ".m3u8") {
 			continue
 		}
 		info, err := file.Info()
@@ -177,4 +179,65 @@ func (s *ShellScriptService) GetM3u8(filePath string) ([]model.FileInfo, error) 
 
 func (s *ShellScriptService) GetMediaToRefine() ([]model.MediaRecord, error) {
 	return s.repo.FindByStatus(mntreamerModel.IDLE)
+}
+
+func (s *ShellScriptService) Stream(fullPath string) (string, error) {
+	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+
+		return "", err
+	}
+	return fullPath, nil
+}
+
+func (s *ShellScriptService) Excise(path string, begin float64, end float64) error {
+	file, err := os.OpenFile(path, os.O_RDONLY, 0)
+	if err != nil {
+		return fmt.Errorf("🛑failed to open file %s: %w", path, err)
+	}
+	defer file.Close()
+
+	playList, err := s.m3u8ParserBiz.Decode(bufio.NewReader(file))
+	if err != nil {
+		return fmt.Errorf("🛑failed to decode file %s: %w", path, err)
+	}
+	file.Close()
+	mediaPlayList := playList.(*model.MediaPlaylist)
+	var duration float64
+
+	segmentsToRemove := []uint{}
+	for i := uint(0); duration < end; i++ {
+		segment, err := mediaPlayList.GetSegment(i)
+		if err != nil {
+			return fmt.Errorf("🛑failed to get segment %d: %w", i, err)
+		}
+		duration += segment.Duration
+		if duration >= begin && duration < end {
+			segmentsToRemove = append(segmentsToRemove, i)
+		}
+	}
+
+	filePath := filepath.Dir(path)
+	discontinueSegment, _ := mediaPlayList.GetSegment(segmentsToRemove[len(segmentsToRemove)-1] + 1)
+	discontinueSegment.SetDiscontinuity(true)
+	for cnt, i := range segmentsToRemove {
+		removeIdx := uint(int(i) - cnt)
+		segment, _ := mediaPlayList.GetSegment(removeIdx)
+		segmentPath := filepath.Join(filePath, segment.Uri)
+		if err := os.Remove(segmentPath); err != nil {
+			return fmt.Errorf("🛑failed to delete segment %s: %w", segment.Uri, err)
+		}
+		mediaPlayList.PullSegment(removeIdx)
+	}
+
+	buf := s.m3u8ParserBiz.Encode(mediaPlayList)
+	file, err = os.OpenFile(path, os.O_WRONLY|os.O_TRUNC, 0644)
+	if err != nil {
+		return fmt.Errorf("🛑failed to open file %s for writing: %w", path, err)
+	}
+	defer file.Close()
+	if _, err := file.Write(buf.GetData()); err != nil {
+		return fmt.Errorf("🛑failed to write updated playlist: %w", err)
+	}
+
+	return nil
 }
