@@ -218,7 +218,7 @@ func (s *ShellScriptService) Decode(path string) (interface{}, error) {
 
 func (s *ShellScriptService) Excise(path string, begin float64, end float64) error {
 	var mpl *model.MediaPlaylist
-	playlist, err := s.Decode(path)
+	playlist, _ := s.Decode(path)
 	mpl, ok := playlist.(*model.MediaPlaylist)
 	if !ok {
 		return fmt.Errorf("🛑decoded playlist is unknown")
@@ -235,6 +235,9 @@ func (s *ShellScriptService) Excise(path string, begin float64, end float64) err
 			segmentsToRemove = append(segmentsToRemove, i)
 		}
 	}
+	if len(segmentsToRemove) == 0 {
+		return fmt.Errorf("🛑nothing to remove")
+	}
 
 	filePath := filepath.Dir(path)
 	discontinueSegment, _ := mpl.GetSegment(segmentsToRemove[len(segmentsToRemove)-1] + 1)
@@ -243,7 +246,7 @@ func (s *ShellScriptService) Excise(path string, begin float64, end float64) err
 		removeIdx := uint(int(i) - cnt)
 		segment, _ := mpl.GetSegment(removeIdx)
 		segmentPath := filepath.Join(filePath, segment.Uri)
-		if err := os.Remove(segmentPath); err != nil {
+		if err := os.Remove(segmentPath); err != nil && !os.IsNotExist(err) {
 			return fmt.Errorf("🛑failed to delete segment %s: %w", segment.Uri, err)
 		}
 		mpl.PullSegment(removeIdx)
