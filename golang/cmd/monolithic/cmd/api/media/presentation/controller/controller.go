@@ -5,6 +5,7 @@ import (
 	"mntreamer/media/cmd/model"
 	platform "mntreamer/platform/cmd/api/domain/service"
 	streamer "mntreamer/streamer/cmd/api/domain/service"
+	"strings"
 	"sync"
 )
 
@@ -59,7 +60,15 @@ func (c *ControllerMono) GetFilesToRefine() ([]model.FileInfo, error) {
 }
 
 func (c *ControllerMono) Stream(filePath string) (string, error) {
-	return c.svc.Stream(filePath)
+	if strings.HasSuffix(filePath, ".m3u8") {
+		c.svc.StreamMediaPlaylist(filePath)
+		return filePath, nil
+	}
+	if strings.HasSuffix(filePath, ".ts") {
+		c.svc.StreamSegment(filePath)
+		return filePath, nil
+	}
+	return "", nil
 }
 
 func (c *ControllerMono) Excise(path string, begin float64, end float64) error {

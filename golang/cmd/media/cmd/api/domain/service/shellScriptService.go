@@ -183,7 +183,20 @@ func (s *ShellScriptService) GetMediaToRefine() ([]model.MediaRecord, error) {
 
 func (s *ShellScriptService) Stream(fullPath string) (string, error) {
 	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+		return "", err
+	}
+	return fullPath, nil
+}
 
+func (s *ShellScriptService) StreamMediaPlaylist(fullPath string) (string, error) {
+	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+		return "", err
+	}
+	return fullPath, nil
+}
+
+func (s *ShellScriptService) StreamSegment(fullPath string) (string, error) {
+	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
 		return "", err
 	}
 	return fullPath, nil

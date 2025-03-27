@@ -13,6 +13,8 @@ type IService interface {
 	GetMediaToRefine() ([]model.MediaRecord, error)
 	GetFilePath(mediaRecord *model.MediaRecord, channelName string) string
 	Stream(filePath string) (string, error)
+	StreamMediaPlaylist(filePath string) (string, error)
+	StreamSegment(filePath string) (string, error)
 	Decode(filePath string) (interface{}, error)
 	Excise(path string, begin float64, end float64) error
 }
