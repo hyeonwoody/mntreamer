@@ -250,7 +250,10 @@ func (s *ShellScriptService) Excise(path string, begin float64, end float64) err
 	}
 
 	buf := s.m3u8ParserBiz.Encode(mpl)
+	return s.WriteBufferToFile(path, buf)
+}
 
+func (s *ShellScriptService) WriteBufferToFile(path string, buf model.IBuffer) error {
 	file, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		return fmt.Errorf("🛑failed to open file %s for writing: %w", path, err)
@@ -259,6 +262,5 @@ func (s *ShellScriptService) Excise(path string, begin float64, end float64) err
 	if _, err := file.Write(buf.GetData()); err != nil {
 		return fmt.Errorf("🛑failed to write updated playlist: %w", err)
 	}
-
 	return nil
 }
