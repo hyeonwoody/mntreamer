@@ -28,7 +28,7 @@ type MediaPlaylist struct {
 }
 
 type MediaSegment struct {
-	URI      string
+	Uri      string
 	Duration float64 // the first parameter of EXTINF; floating-point duration values
 	Discontinuity   bool      // EXT-X-DISCONTINUITY indicates an encoding discontinuity (file format, tracks, timestamp, encoding parameters, encoding sequence)
 	SCTE            *SCTE     // SCTE-35 used for Ad signaling in HLS
