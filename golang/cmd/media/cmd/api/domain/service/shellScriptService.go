@@ -343,15 +343,9 @@ func (s *ShellScriptService) WriteBufferToFile(path string, buf model.IBuffer) e
 }
 
 func (s *ShellScriptService) Delete(platformId uint16, streamerId uint32, fullPath string) (*model.MediaRecord, error) {
-	files, err := s.GetMediaFiles(fullPath)
-	if err != nil {
-		return nil, err
-	}
-	for _, file := range files {
-		if err := os.Remove(file.Path); err != nil && !os.IsNotExist(err) {
-			return nil, fmt.Errorf("🛑failed to delete media %s: %w", file.Path, err)
-		}
-	}
+
+	s.deleteMedia(fullPath)
+	s.deleteMediaPlaylist(fullPath)
 	date, err := s.GetDateByFilePath(fullPath)
 	if err != nil {
 		return nil, err
@@ -365,4 +359,27 @@ func (s *ShellScriptService) Delete(platformId uint16, streamerId uint32, fullPa
 		return nil, err
 	}
 	return terminated, nil
+}
+
+func (s *ShellScriptService) deleteMediaPlaylist(fullPath string) error {
+	if err := os.Remove(fullPath); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("🛑failed to delete media playlist %s: %w", fullPath, err)
+	}
+	return nil
+}
+
+func (s *ShellScriptService) deleteMedia(fullPath string) error {
+	playlist, _ := s.Decode(fullPath)
+	mpl, ok := playlist.(*model.MediaPlaylist)
+	if !ok {
+		return fmt.Errorf("🛑decoded playlist is unknown")
+	}
+	filePath := filepath.Dir(fullPath)
+	for i := range mpl.Count() {
+		seg, _ := mpl.GetSegment(i)
+		if err := os.Remove(filepath.Join(filePath, seg.Uri)); err != nil && !os.IsNotExist(err) {
+			return fmt.Errorf("🛑failed to delete media %s: %w", filepath.Join(filePath, seg.Uri), err)
+		}
+	}
+	return nil
 }
