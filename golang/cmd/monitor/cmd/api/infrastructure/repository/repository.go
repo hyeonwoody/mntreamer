@@ -44,9 +44,13 @@ func (r *Repository) FindByCheckAtLock(currentTime time.Time) (*model.StreamerMo
 		Table:    clause.Table{Name: "streamer_monitor"},
 	}).
 		Where("check_at < ?", currentTime).
+		Order("check_at ASC").
 		First(&streamerMonitor)
 	if result.Error != nil {
 		return nil, tx, result.Error
+	}
+	if result.RowsAffected == 0 {
+		return nil, nil, gorm.ErrRecordNotFound
 	}
 	return &streamerMonitor, tx, nil
 }
