@@ -57,7 +57,8 @@ func (ctnr *MonolithicContainer) DefineRoute() error {
 		mediaGroup.POST("", ctnr.MediaCtnr.Handler.GetFiles)
 		mediaGroup.GET("/stream/*filePath", ctnr.MediaCtnr.Handler.Stream)
 		mediaGroup.GET("/target-duration/*filePath", ctnr.MediaCtnr.Handler.GetTargetDuration)
-		mediaGroup.PATCH("", ctnr.MediaCtnr.Handler.Excise)
+		mediaGroup.PATCH("/excise", ctnr.MediaCtnr.Handler.Excise)
+		mediaGroup.PATCH("/confirm/*filePath", ctnr.MediaCtnr.Handler.Confirm)
 		mediaGroup.DELETE("/*filePath", ctnr.MediaCtnr.Handler.Delete)
 	}
 	return nil

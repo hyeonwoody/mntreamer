@@ -22,5 +22,7 @@ type IService interface {
 	StreamSegment(filePath string) (string, error)
 	Decode(filePath string) (interface{}, error)
 	Excise(path string, begin float64, end float64) error
+	UpdateStatus(mediaRecord *model.MediaRecord, status int8) (*model.MediaRecord, error)
+	Confirm(platformId uint16, streamerId uint32, fullPath string) (*model.MediaRecord, error)
 	Delete(platformId uint16, streamerId uint32, fullPath string) (*model.MediaRecord, error)
 }

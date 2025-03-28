@@ -75,6 +75,27 @@ func (c *ControllerMono) Excise(path string, begin float64, end float64) error {
 	return c.svc.Excise(path, begin, end)
 }
 
+func (c *ControllerMono) Confirm(filePath string) error {
+	platformName, err := c.svc.GetPlatformNameByFilePath(filePath)
+	if err != nil {
+		return err
+	}
+	channelName, err := c.svc.GetChannelNameByFilePath(filePath)
+	if err != nil {
+		return err
+	}
+	platformId, _ := c.platformSvc.GetPlatformIdByName(platformName)
+	if err != nil {
+		return err
+	}
+	streamer, err := c.streamerSvc.FindByPlatformIdAndChannelName(platformId, channelName)
+	if err != nil {
+		return err
+	}
+	_, err = c.svc.Confirm(streamer.PlatformId, streamer.Id, filePath)
+	return err
+}
+
 func (c *ControllerMono) Delete(filePath string) error {
 	platformName, err := c.svc.GetPlatformNameByFilePath(filePath)
 	channelName, err := c.svc.GetChannelNameByFilePath(filePath)

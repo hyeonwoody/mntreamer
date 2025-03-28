@@ -27,3 +27,13 @@ func NewMediaRecord(platformId uint16, streamerId uint32) *MediaRecord {
 		Date:       time.Date(year, month, day, 0, 0, 0, 0, time.UTC),
 	}
 }
+
+func NewInstance(platformId uint16, streamerId uint32, date time.Time, sequence uint16, status int8) *MediaRecord {
+	return &MediaRecord{
+		PlatformId: platformId,
+		StreamerId: streamerId,
+		Date:       date,
+		Sequence:   sequence,
+		Status:     status,
+	}
+}

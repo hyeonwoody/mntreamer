@@ -346,19 +346,45 @@ func (s *ShellScriptService) Delete(platformId uint16, streamerId uint32, fullPa
 
 	s.deleteMedia(fullPath)
 	s.deleteMediaPlaylist(fullPath)
-	date, err := s.GetDateByFilePath(fullPath)
+	date, sequence, err := s.getDateAndSequeceFromFullPath(fullPath)
 	if err != nil {
 		return nil, err
 	}
-	sequence, err := s.GetSequenceByFilePath(fullPath)
-	if err != nil {
-		return nil, err
-	}
-	terminated, err := s.repo.Terminate(platformId, streamerId, date, sequence)
+	terminated, err := s.UpdateStatus(model.NewInstance(platformId, streamerId, date, sequence, mntreamerModel.TERMINATED), mntreamerModel.TERMINATED)
 	if err != nil {
 		return nil, err
 	}
 	return terminated, nil
+}
+
+func (s *ShellScriptService) Confirm(platformId uint16, streamerId uint32, fullPath string) (*model.MediaRecord, error) {
+	date, sequence, err := s.getDateAndSequeceFromFullPath(fullPath)
+	if err != nil {
+		return nil, err
+	}
+	confirmed, err := s.UpdateStatus(model.NewInstance(platformId, streamerId, date, sequence, mntreamerModel.DONE), mntreamerModel.DONE)
+	if err != nil {
+		return nil, err
+	}
+	return confirmed, nil
+}
+
+func (s *ShellScriptService) getDateAndSequeceFromFullPath(fullPath string) (time.Time, uint16, error) {
+	date, err := s.GetDateByFilePath(fullPath)
+	if err != nil {
+		return time.Time{}, 0, err
+	}
+	sequence, err := s.GetSequenceByFilePath(fullPath)
+	if err != nil {
+		return time.Time{}, 0, err
+	}
+	return date, sequence, nil
+}
+
+func (s *ShellScriptService) UpdateStatus(mediaRecord *model.MediaRecord, status int8) (*model.MediaRecord, error) {
+	mediaRecord.Status = status
+	updated, err := s.repo.Save(mediaRecord)
+	return updated, err
 }
 
 func (s *ShellScriptService) deleteMediaPlaylist(fullPath string) error {
