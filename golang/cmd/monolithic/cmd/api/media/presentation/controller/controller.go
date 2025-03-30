@@ -5,6 +5,7 @@ import (
 	"mntreamer/media/cmd/model"
 	platform "mntreamer/platform/cmd/api/domain/service"
 	streamer "mntreamer/streamer/cmd/api/domain/service"
+	"os"
 	"strings"
 	"sync"
 )
@@ -46,7 +47,7 @@ func (c *ControllerMono) GetFilesToRefine() ([]model.FileInfo, error) {
 				return
 			}
 			filePath := c.svc.GetFilePath(&media, streamer.ChannelName)
-			m3u8Infos, err := c.svc.GetM3u8(filePath)
+			m3u8Infos, err := c.svc.GetM3u8(filePath, media.Sequence)
 			if err != nil {
 				return
 			}

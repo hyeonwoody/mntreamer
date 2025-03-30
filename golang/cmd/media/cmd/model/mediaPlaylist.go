@@ -41,6 +41,17 @@ func (mpl *MediaPlaylist) SetDiscontinuity(discontinuity bool) {
 	mpl.segments[mpl.lastSegmentIndex()].Discontinuity = discontinuity
 }
 
+func (mpl *MediaPlaylist) SetDiscontinuityWithIndex(idx uint, discontinuity bool) {
+	if idx == 0 {
+		return
+	}
+	seg, _ := mpl.GetSegment(idx)
+	if seg != nil {
+		seg.Discontinuity = true
+	}
+
+}
+
 func NewMediaPlaylist(winSize uint, capacity uint) *MediaPlaylist {
 	return &MediaPlaylist{
 		Version:  3,
@@ -72,7 +83,7 @@ func (mpl *MediaPlaylist) PullSegment(index uint) (*MediaSegment, error) {
 		nextIndex := (i + 1) % mpl.capacity
 		mpl.segments[i] = mpl.segments[nextIndex]
 	}
-	mpl.tail = (mpl.tail - 1 + mpl.count) % mpl.capacity
+	mpl.tail = (mpl.tail - 1) % mpl.capacity
 	mpl.count--
 	return segment, nil
 }
