@@ -39,14 +39,16 @@ func (s *ShellScriptService) Download(media *mntreamerModel.Media, channelName s
 	s.createFolder(path)
 	filename := s.getBaseFilename(now, channelNameWithNoSpace)
 	filename = s.getTitle(media.Title, filename)
-	filePath := s.getSequence(path, filename)
+
+	sequence := s.getSequence(path, filename)
+	filePath := filepath.Join(path, fmt.Sprintf("%s.%d", filename, sequence))
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	cmd := exec.CommandContext(ctx,
 		"ffmpeg",
-		media.VideoUrl,
 		"-i",
+		media.VideoUrl,
 		"-c", "copy",
 		"-f", "segment",
 		"-segment_time", "60",
@@ -54,7 +56,7 @@ func (s *ShellScriptService) Download(media *mntreamerModel.Media, channelName s
 		"-segment_list", filePath+".m3u8",
 		"-segment_list_type", "m3u8",
 		"-strftime", "1",
-		filePath+".%H%M%S.ts")
+		filepath.Join(path, fmt.Sprintf("%d", sequence))+".%H%M%S.ts")
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	fmt.Printf("Running command: %v\n", cmd.Args)
 	cmd.Start()
@@ -81,7 +83,7 @@ func (s *ShellScriptService) getTitle(title string, filename string) string {
 	return filename
 }
 
-func (s *ShellScriptService) getSequence(path string, filename string) string {
+func (s *ShellScriptService) getSequence(path string, filename string) uint {
 	cnt := 0
 	filePath := filepath.Join(path, fmt.Sprintf("%s.%d.m3u8", filename, cnt))
 	for {
@@ -91,7 +93,7 @@ func (s *ShellScriptService) getSequence(path string, filename string) string {
 		cnt++
 		filePath = filepath.Join(path, fmt.Sprintf("%s.%d.m3u8", filename, cnt))
 	}
-	return filepath.Join(path, fmt.Sprintf("%s.%d", filename, cnt))
+	return uint(cnt)
 }
 
 func (s *ShellScriptService) createFolder(path string) error {
