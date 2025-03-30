@@ -41,7 +41,7 @@ func (r *Repository) Terminate(platformId uint16, streamerId uint32, date time.T
 	return &mediaRecord, nil
 }
 
-func (r *Repository) FindByStatus(status int) ([]model.MediaRecord, error) {
+func (r *Repository) FindByStatus(status int8) ([]model.MediaRecord, error) {
 	var mediaRecords []model.MediaRecord
 	result := r.mysql.Driver.Where("status = ?", status).
 		Find(&mediaRecords)
