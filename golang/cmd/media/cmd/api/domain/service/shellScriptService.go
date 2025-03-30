@@ -2,6 +2,7 @@ package service
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"fmt"
 	parserBusiness "mntreamer/media/cmd/api/domain/business/parser"
@@ -15,6 +16,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 )
@@ -277,6 +279,14 @@ func (s *ShellScriptService) StreamSegment(fullPath string) (string, error) {
 	return fullPath, nil
 }
 
+func (s *ShellScriptService) StreamMp4(fullPath string) (*os.File, error) {
+	file, err := os.Open(fullPath)
+	if err != nil {
+		return nil, err
+	}
+	return file, nil
+}
+
 func (s *ShellScriptService) Decode(path string) (interface{}, error) {
 	file, err := os.OpenFile(path, os.O_RDONLY, 0)
 	if err != nil {
@@ -292,6 +302,9 @@ func (s *ShellScriptService) Decode(path string) (interface{}, error) {
 }
 
 func (s *ShellScriptService) Excise(path string, begin float64, end float64) error {
+	if strings.HasSuffix(path, ".mp4") {
+		return s.exciseMp4(path, begin, end)
+	}
 	var mpl *model.MediaPlaylist
 	playlist, _ := s.Decode(path)
 	mpl, ok := playlist.(*model.MediaPlaylist)
@@ -330,6 +343,101 @@ func (s *ShellScriptService) Excise(path string, begin float64, end float64) err
 	return s.WriteBufferToFile(path, buf)
 }
 
+func (s *ShellScriptService) exciseMp4(fullPath string, begin float64, end float64) error {
+	filePath := filepath.Dir(fullPath)
+	filename := filepath.Base(fullPath)
+	tmpPath := filepath.Join(filePath, "FFMPEG_"+filename)
+	os.Rename(fullPath, tmpPath)
+	parts := []string{fmt.Sprintf("%s.part1.mp4", fullPath), fmt.Sprintf("%s.part2.mp4", fullPath)}
+	var wg sync.WaitGroup
+	var err error
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		if trimErr := s.Trim(tmpPath, 0, begin, parts[0]); trimErr != nil {
+			err = trimErr
+		}
+	}()
+	go func() {
+		defer wg.Done()
+		if trimErr := s.Trim(tmpPath, end, -1, parts[1]); trimErr != nil {
+			err = trimErr
+		}
+	}()
+	wg.Wait()
+	if err != nil {
+		os.Rename(tmpPath, fullPath)
+		return err
+	}
+
+	err = s.Combine(parts, fullPath)
+	for _, file := range parts {
+		os.Remove(file)
+	}
+
+	if err != nil {
+		os.Rename(tmpPath, fullPath)
+		return err
+	}
+
+	os.Remove(tmpPath)
+	return nil
+}
+
+func (s *ShellScriptService) Combine(files []string, output string) error {
+	filePath := filepath.Dir(output)
+	fileList := filePath + "/list.txt"
+	f, err := os.Create(fileList)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	for _, file := range files {
+		_, err := f.WriteString(fmt.Sprintf("file '%s'\n", file))
+		if err != nil {
+			return err
+		}
+	}
+
+	cmd := exec.Command(
+		"ffmpeg",
+		"-f", "concat",
+		"-safe", "0",
+		"-i", fileList,
+		"-c", "copy", output)
+	fmt.Printf("Running command: %v\n", cmd.Args)
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	err = cmd.Run()
+	os.Remove(fileList)
+	return err
+}
+
+func (s *ShellScriptService) Trim(fullPath string, begin, end float64, output string) error {
+	beginStr := fmt.Sprintf("%.3f", begin)
+	durationStr := fmt.Sprintf("%.3f", end-begin)
+	args := []string{
+		"-y",
+		"-i", fullPath,
+		"-c", "copy",
+		"-ss", beginStr}
+	if end != -1 {
+		args = append(args, "-t", durationStr)
+	}
+	args = append(args, output)
+	cmd := exec.Command("ffmpeg", args...)
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	fmt.Printf("Running command: %v\n", cmd.Args)
+
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	if err != nil {
+		fmt.Printf("FFmpeg error: %v\nError details: %s\n", err, stderr.String())
+	}
+	return err
+}
+
 func (s *ShellScriptService) WriteBufferToFile(path string, buf model.IBuffer) error {
 	file, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
@@ -339,11 +447,15 @@ func (s *ShellScriptService) WriteBufferToFile(path string, buf model.IBuffer) e
 	if _, err := file.Write(buf.GetData()); err != nil {
 		return fmt.Errorf("🛑failed to write updated playlist: %w", err)
 	}
+	file.Close()
 	return nil
 }
 
 func (s *ShellScriptService) Delete(platformId uint16, streamerId uint32, fullPath string) (*model.MediaRecord, error) {
-
+	if strings.HasSuffix(fullPath, ".mp4") {
+		s.deleteMp4(fullPath)
+		return nil, nil
+	}
 	s.deleteMedia(fullPath)
 	s.deleteMediaPlaylist(fullPath)
 	date, sequence, err := s.getDateAndSequeceFromFullPath(fullPath)
@@ -385,6 +497,13 @@ func (s *ShellScriptService) UpdateStatus(mediaRecord *model.MediaRecord, status
 	mediaRecord.Status = status
 	updated, err := s.repo.Save(mediaRecord)
 	return updated, err
+}
+
+func (s *ShellScriptService) deleteMp4(fullPath string) error {
+	if err := os.Remove(fullPath); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("🛑failed to delete media playlist %s: %w", fullPath, err)
+	}
+	return nil
 }
 
 func (s *ShellScriptService) deleteMediaPlaylist(fullPath string) error {

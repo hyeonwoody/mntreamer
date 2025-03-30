@@ -2,7 +2,6 @@ package configuration
 
 import (
 	parser "mntreamer/media/cmd/api/domain/business/parser"
-	business "mntreamer/media/cmd/api/domain/business/platform"
 	platform "mntreamer/media/cmd/api/domain/business/platform"
 	"mntreamer/media/cmd/api/domain/service"
 	"mntreamer/media/cmd/api/infrastructure/repository"
@@ -60,7 +59,7 @@ func (ctnr *MonolithicContainer) DefineGrpc() error {
 
 func (ctnr *MonolithicContainer) InitDependency(mysql any) error {
 	businessMap := map[uint16]platform.IBusiness{
-		1: business.NewChzzkBusiness(),
+		1: platform.NewChzzkBusiness(),
 	}
 	m3u8Biz := parser.NewM3u8Business()
 	ctnr.Service = service.NewShellScriptService(platform.NewBusinessStrategy(businessMap), repository.NewRepository(ctnr.MysqlWrapper), m3u8Biz, ctnr.Variable.RootPath)
