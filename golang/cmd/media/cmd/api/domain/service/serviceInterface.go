@@ -3,12 +3,13 @@ package service
 import (
 	model "mntreamer/media/cmd/model"
 	mntreamerModel "mntreamer/shared/model"
+	"os"
 	"time"
 )
 
 type IService interface {
 	Download(media *mntreamerModel.Media, channelName string, platformId uint16) error
-	Save(platformId uint16, streamerId uint32)
+	Save(platformId uint16, streamerId uint32, status int8)
 	GetFiles(filePath string) ([]model.FileInfo, error)
 	GetM3u8(filePath string, sequence uint16) ([]model.FileInfo, error)
 	GetMediaToRefine() ([]model.MediaRecord, error)

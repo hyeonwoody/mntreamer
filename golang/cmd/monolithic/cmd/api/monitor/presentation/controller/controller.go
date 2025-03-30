@@ -74,9 +74,18 @@ func (c *ControllerMono) monitorProcess() {
 	}
 	c.streamerSvc.UpdateStatus(streamer, mntreamerModel.RECORDING)
 	go func(channelName string, monitor *monitorModel.StreamerMonitor, media *mntreamerModel.Media) {
+		go c.preStream(monitor)
 		c.mediaSvc.Download(media, streamer.ChannelName, monitor.PlatformId)
 		go c.postStream(monitor)
 	}(streamer.ChannelName, monitor, media)
+}
+
+func (c *ControllerMono) preStream(monitor *monitorModel.StreamerMonitor) {
+	c.handleMediaBeforeStream(monitor)
+}
+
+func (c *ControllerMono) handleMediaBeforeStream(monitor *monitorModel.StreamerMonitor) {
+	c.mediaSvc.Save(monitor.PlatformId, monitor.StreamerId, mntreamerModel.PROCESS)
 }
 
 func (c *ControllerMono) postStream(monitor *monitorModel.StreamerMonitor) {
@@ -98,7 +107,7 @@ func (c *ControllerMono) postStream(monitor *monitorModel.StreamerMonitor) {
 }
 
 func (c *ControllerMono) handleMediaAfterStream(monitor *monitorModel.StreamerMonitor) {
-	c.mediaSvc.Save(monitor.PlatformId, monitor.StreamerId)
+	c.mediaSvc.Save(monitor.PlatformId, monitor.StreamerId, mntreamerModel.IDLE)
 }
 
 func (c *ControllerMono) handleMonitorAfterStream(monitor *monitorModel.StreamerMonitor) {

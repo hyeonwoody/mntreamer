@@ -164,8 +164,8 @@ func (s *ShellScriptService) getBaseFilename(now time.Time, channelName string) 
 	return fmt.Sprintf("%s.%s", channelName, date)
 }
 
-func (s *ShellScriptService) Save(platformId uint16, streamerId uint32) {
-	s.repo.Save(model.NewMediaRecord(platformId, streamerId))
+func (s *ShellScriptService) Save(platformId uint16, streamerId uint32, status int8) {
+	s.repo.Save(model.NewMediaRecord(platformId, streamerId, status))
 }
 
 func (s *ShellScriptService) GetFiles(filePath string) ([]model.FileInfo, error) {

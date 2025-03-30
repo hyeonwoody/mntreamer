@@ -1,7 +1,6 @@
 package model
 
 import (
-	mntreamerModel "mntreamer/shared/model"
 	"time"
 )
 
@@ -17,13 +16,13 @@ func (MediaRecord) TableName() string {
 	return "media_record"
 }
 
-func NewMediaRecord(platformId uint16, streamerId uint32) *MediaRecord {
+func NewMediaRecord(platformId uint16, streamerId uint32, status int8) *MediaRecord {
 	now := time.Now()
 	year, month, day := now.Date()
 	return &MediaRecord{
 		PlatformId: platformId,
 		StreamerId: streamerId,
-		Status:     mntreamerModel.IDLE,
+		Status:     status,
 		Date:       time.Date(year, month, day, 0, 0, 0, 0, time.UTC),
 	}
 }
