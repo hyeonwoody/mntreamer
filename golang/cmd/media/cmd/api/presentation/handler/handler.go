@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"mntreamer/media/cmd/api/presentation/controller"
+	"path/filepath"
 	"strings"
 
 	"net/http"
@@ -43,6 +44,10 @@ func (h *Handler) GetFiles(c *gin.Context) {
 	}
 
 	if err != nil {
+		if strings.Contains(err.Error(), "no such file or directory") {
+			c.JSON(http.StatusBadRequest, gin.H{"files": fileInfos})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to retrieve files: %v", err)})
 		return
 	}
@@ -60,10 +65,26 @@ func (h *Handler) GetTargetDuration(c *gin.Context) {
 
 func (h *Handler) Stream(c *gin.Context) {
 	filePath := c.Param("filePath")
-
-	if fullPath, err := h.ctrl.Stream(filePath); err == nil {
-		c.Header("Content-Type", "application/vnd.apple.mpegurl")
-		c.File(fullPath)
+	file, fullPath, err := h.ctrl.Stream(filePath)
+	if err == nil {
+		ext := filepath.Ext(fullPath)
+		if ext == ".ts" {
+			c.File(fullPath)
+		}
+		if ext == ".m3u8" {
+			c.File(fullPath)
+		}
+		if ext == ".mp4" {
+			stat, err := file.Stat()
+			if err != nil {
+				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Could not get file info"})
+				return
+			}
+			c.Header("Content-Type", "video/mp4")
+			c.Header("Accept-Ranges", "bytes")
+			c.Header("Content-Length", fmt.Sprintf("%d", stat.Size()))
+			c.File(fullPath)
+		}
 		return
 	}
 	c.String(http.StatusNotFound, "File not found")

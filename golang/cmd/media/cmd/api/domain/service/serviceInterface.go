@@ -20,6 +20,7 @@ type IService interface {
 	Stream(filePath string) (string, error)
 	StreamMediaPlaylist(filePath string) (string, error)
 	StreamSegment(filePath string) (string, error)
+	StreamMp4(filePath string) (*os.File, error)
 	Decode(filePath string) (interface{}, error)
 	Excise(path string, begin float64, end float64) error
 	UpdateStatus(mediaRecord *model.MediaRecord, status int8) (*model.MediaRecord, error)

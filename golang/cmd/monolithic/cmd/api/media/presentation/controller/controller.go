@@ -59,16 +59,20 @@ func (c *ControllerMono) GetFilesToRefine() ([]model.FileInfo, error) {
 	return m3u8List, nil
 }
 
-func (c *ControllerMono) Stream(filePath string) (string, error) {
+func (c *ControllerMono) Stream(filePath string) (*os.File, string, error) {
 	if strings.HasSuffix(filePath, ".m3u8") {
-		c.svc.StreamMediaPlaylist(filePath)
-		return filePath, nil
+		fullPath, err := c.svc.StreamMediaPlaylist(filePath)
+		return nil, fullPath, err
 	}
 	if strings.HasSuffix(filePath, ".ts") {
-		c.svc.StreamSegment(filePath)
-		return filePath, nil
+		fullPath, err := c.svc.StreamSegment(filePath)
+		return nil, fullPath, err
 	}
-	return "", nil
+	if strings.HasSuffix(filePath, ".mp4") {
+		file, err := c.svc.StreamMp4(filePath)
+		return file, file.Name(), err
+	}
+	return nil, "", nil
 }
 
 func (c *ControllerMono) Excise(path string, begin float64, end float64) error {
