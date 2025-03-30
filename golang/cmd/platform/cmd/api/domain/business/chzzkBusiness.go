@@ -177,6 +177,8 @@ func (chzz *ChzzkBusiness) parseM3u8ChunklistUrl(m3u8Url string) (string, error)
 	relativeUrl := matches[1]
 	index := strings.Index(m3u8Url, "hls_playlist.m3u8")
 	baseUrl := m3u8Url[:index]
+	lastSlashIndex := strings.LastIndex(baseUrl, "/")
+	baseUrl = baseUrl[:lastSlashIndex+1]
 	fullChunklistUrl := baseUrl + relativeUrl
 	return fullChunklistUrl, nil
 }
