@@ -30,7 +30,7 @@ func (ctnr *MonolithicContainer) SetRouter(router any) {
 
 }
 
-func (ctnr *MonolithicContainer) DefineRoute() error {
+func (ctnr *MonolithicContainer) DefineRoute(router any) error {
 	return nil
 }
 func (ctnr *MonolithicContainer) GetHttpHandler() http.Handler {

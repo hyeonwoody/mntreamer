@@ -12,9 +12,12 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+
+	"github.com/gin-gonic/gin"
 )
 
 type MonolithicContainer struct {
+	Router       *gin.Engine
 	Variable     *Variable
 	Service      service.IService
 	Controller   controller.IController
@@ -35,7 +38,23 @@ func (ctnr *MonolithicContainer) SetRouter(router any) {
 
 }
 
-func (ctnr *MonolithicContainer) DefineRoute() error {
+func (ctnr *MonolithicContainer) DefineRoute(router any) error {
+
+	ginRouter, ok := router.(*gin.Engine)
+	if !ok {
+		ginRouter = gin.Default()
+	}
+	ctnr.Router = ginRouter
+	mediaGroup := ctnr.Router.Group("/api/v1/media")
+	{
+		mediaGroup.POST("", ctnr.Handler.GetFiles)
+		mediaGroup.GET("/stream/*filePath", ctnr.Handler.Stream)
+		mediaGroup.GET("/target-duration/*filePath", ctnr.Handler.GetTargetDuration)
+		mediaGroup.PATCH("/excise", ctnr.Handler.Excise)
+		mediaGroup.PATCH("/confirm/*filePath", ctnr.Handler.Confirm)
+		mediaGroup.DELETE("/*filePath", ctnr.Handler.Delete)
+	}
+
 	return nil
 }
 func (ctnr *MonolithicContainer) GetHttpHandler() http.Handler {

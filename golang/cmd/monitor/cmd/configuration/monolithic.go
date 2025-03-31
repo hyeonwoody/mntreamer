@@ -34,7 +34,16 @@ func (ctnr *MonolithicContainer) SetRouter(router any) {
 	ctnr.Router = router.(*gin.Engine)
 }
 
-func (ctnr *MonolithicContainer) DefineRoute() error {
+func (ctnr *MonolithicContainer) DefineRoute(router any) error {
+	ginRouter, ok := router.(*gin.Engine)
+	if !ok {
+		ginRouter = gin.Default()
+	}
+	ctnr.Router = ginRouter
+	monitorGroup := ctnr.Router.Group("/api/v1/monitor")
+	{
+		monitorGroup.POST("", ctnr.Handler.Add)
+	}
 	return nil
 }
 func (ctnr *MonolithicContainer) GetHttpHandler() http.Handler {

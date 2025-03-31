@@ -47,20 +47,9 @@ func (ctnr *MonolithicContainer) RunRouter() error {
 	return nil
 }
 
-func (ctnr *MonolithicContainer) DefineRoute() error {
-	monitorGroup := ctnr.Router.Group("/api/v1/monitor")
-	{
-		monitorGroup.POST("", ctnr.MonitorCtnr.Handler.Add)
-	}
-	mediaGroup := ctnr.Router.Group("/api/v1/media")
-	{
-		mediaGroup.POST("", ctnr.MediaCtnr.Handler.GetFiles)
-		mediaGroup.GET("/stream/*filePath", ctnr.MediaCtnr.Handler.Stream)
-		mediaGroup.GET("/target-duration/*filePath", ctnr.MediaCtnr.Handler.GetTargetDuration)
-		mediaGroup.PATCH("/excise", ctnr.MediaCtnr.Handler.Excise)
-		mediaGroup.PATCH("/confirm/*filePath", ctnr.MediaCtnr.Handler.Confirm)
-		mediaGroup.DELETE("/*filePath", ctnr.MediaCtnr.Handler.Delete)
-	}
+func (ctnr *MonolithicContainer) DefineRoute(router any) error {
+	ctnr.MonitorCtnr.DefineRoute(ctnr.Router)
+	ctnr.MediaCtnr.DefineRoute(ctnr.Router)
 	return nil
 }
 func (ctnr *MonolithicContainer) GetHttpHandler() http.Handler {
@@ -99,6 +88,6 @@ func NewMonolithicContainer() *MonolithicContainer {
 	router := gin.Default()
 	ctnr.SetRouter(router)
 
-	ctnr.DefineRoute()
+	ctnr.DefineRoute(nil)
 	return ctnr
 }
