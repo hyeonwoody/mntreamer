@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -78,9 +79,14 @@ func (s *ShellScriptService) Download(media *mntreamerModel.Media, channelName s
 }
 
 func (s *ShellScriptService) getTitle(title string, filename string) string {
-	titleWithNoSpace := strings.ReplaceAll(title, " ", "")
-	filename += "." + titleWithNoSpace
-	return filename
+	reg := regexp.MustCompile(`[<>:"/\\|?*\x00-\x1F]`)
+	titleCleaned := reg.ReplaceAllString(title, "")
+	titleWithUnderscores := strings.ReplaceAll(titleCleaned, " ", "_")
+	titleTrimmed := strings.Trim(titleWithUnderscores, "_.")
+	if titleTrimmed == "" {
+		titleTrimmed = "untitled"
+	}
+	return filename + "." + titleTrimmed
 }
 
 func (s *ShellScriptService) getSequence(path string, filename string) uint {
@@ -234,10 +240,10 @@ func (s *ShellScriptService) GetM3u8(filePath string, sequence uint16) ([]model.
 	}
 
 	//TODO
-	//suffix := fmt.Sprintf(".m3u8", sequence)
+	suffix := fmt.Sprintf("%d.m3u8", sequence)
 	var fileInfos []model.FileInfo
 	for _, file := range files {
-		if !strings.HasSuffix(file.Name(), ".m3u8") {
+		if !strings.HasSuffix(file.Name(), suffix) {
 			continue
 		}
 		info, err := file.Info()
@@ -252,6 +258,7 @@ func (s *ShellScriptService) GetM3u8(filePath string, sequence uint16) ([]model.
 			Size:        info.Size(),
 			UpdatedAt:   info.ModTime().UTC().Format(http.TimeFormat),
 		})
+		break
 	}
 	return fileInfos, nil
 }
