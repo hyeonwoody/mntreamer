@@ -112,8 +112,8 @@ func (s *ShellScriptService) createFolder(path string) error {
 	return nil
 }
 
-func (s *ShellScriptService) GetFilePath(mediaRecord *model.MediaRecord, channelName string) string {
-	basePath := s.bizStrat.GetDownloadPath(mediaRecord.PlatformId)
+func (s *ShellScriptService) GetFilePath(mediaRecord *model.MediaRecord, platformName, channelName string) string {
+	basePath := fmt.Sprintf("%s/%s", s.GetRootPath(), platformName)
 	year := mediaRecord.Date.Format("2006")
 	month := mediaRecord.Date.Format("01")
 	day := mediaRecord.Date.Format("02")
