@@ -38,7 +38,7 @@ func (s *ShellScriptService) GetRootPath() string {
 func (s *ShellScriptService) Download(media *mntreamerModel.Media, channelName string, platformId uint16) error {
 	now := time.Now()
 	channelNameWithNoSpace := strings.ReplaceAll(channelName, " ", "")
-	path := s.getFilePath(now, platformId, channelName)
+	path := s.getFilePath(now, media.OutputUrl, channelName)
 	s.createFolder(path)
 	filename := s.getBaseFilename(now, channelNameWithNoSpace)
 	filename = s.getTitle(media.Title, filename)
@@ -160,8 +160,8 @@ func (s *ShellScriptService) GetSequenceByFilePath(fullPath string) (uint16, err
 	return uint16(sequence), nil
 }
 
-func (s *ShellScriptService) getFilePath(now time.Time, platformId uint16, channelName string) string {
-	basePath := s.bizStrat.GetDownloadPath(platformId)
+func (s *ShellScriptService) getFilePath(now time.Time, url string, channelName string) string {
+	basePath := fmt.Sprintf("%s/%s", s.GetRootPath(), url)
 	year := fmt.Sprintf("%d", now.Year())
 	month := fmt.Sprintf("%02d", now.Month())
 	day := fmt.Sprintf("%02d", now.Day())

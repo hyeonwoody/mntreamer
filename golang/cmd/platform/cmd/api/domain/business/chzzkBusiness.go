@@ -135,7 +135,7 @@ func (chzz *ChzzkBusiness) GetMediaDetail(streamer *mntreamerModel.Streamer) (*m
 		return nil, err
 	}
 
-	return mntreamerModel.NewMedia(liveDetail.LiveTitle, mediaUrl, liveDetail.LiveImageUrl), nil
+	return mntreamerModel.NewMedia(liveDetail.LiveTitle, mediaUrl, liveDetail.LiveImageUrl, chzz.GetPlatformName()), nil
 }
 
 func (*ChzzkBusiness) getM3u8PlaylistUrl(livePlayback map[string]interface{}, err error) (string, error) {
