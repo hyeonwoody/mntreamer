@@ -24,6 +24,10 @@ func NewChzzkBusiness(clnt externalApi.IClient) *ChzzkBusiness {
 	return &ChzzkBusiness{clnt: clnt}
 }
 
+func (chzz *ChzzkBusiness) GetPlatformName() string {
+	return "chzzk"
+}
+
 func (chzz *ChzzkBusiness) GetChannelId(nickname string) (string, error) {
 	url := chzz.makeQueryUrl(nickname)
 	html := renderQueryHtml(url)

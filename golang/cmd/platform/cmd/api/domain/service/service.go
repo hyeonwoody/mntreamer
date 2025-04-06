@@ -23,6 +23,11 @@ func (s *Service) GetPlatformIdByName(name string) (uint16, error) {
 	return platform.Id, nil
 }
 
+func (s *Service) GetPlatformNameById(id uint16) string {
+	clnt := s.bizStrat.GetBusiness(id)
+	return clnt.GetPlatformName()
+}
+
 func (s *Service) BuildStreamer(platformName, nickname string) (*mntreamerModel.Streamer, error) {
 	platformId, err := s.GetPlatformIdByName(platformName)
 	if err != nil {

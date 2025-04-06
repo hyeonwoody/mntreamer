@@ -5,6 +5,7 @@ import (
 )
 
 type IBusiness interface {
+	GetPlatformName() string
 	GetChannelName(nickname string) (string, error)
 	GetChannelId(nickname string) (string, error)
 	GetMediaDetail(streamer *mntreamerModel.Streamer) (*mntreamerModel.Media, error)

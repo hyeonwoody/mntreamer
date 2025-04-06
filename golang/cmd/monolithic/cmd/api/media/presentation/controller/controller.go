@@ -46,7 +46,8 @@ func (c *ControllerMono) GetFilesToRefine() ([]model.FileInfo, error) {
 			if err != nil {
 				return
 			}
-			filePath := c.svc.GetFilePath(&media, streamer.ChannelName)
+			platformName := c.platformSvc.GetPlatformNameById(media.PlatformId)
+			filePath := c.svc.GetFilePath(&media, platformName, streamer.ChannelName)
 			m3u8Infos, err := c.svc.GetM3u8(filePath, media.Sequence)
 			if err != nil {
 				return
