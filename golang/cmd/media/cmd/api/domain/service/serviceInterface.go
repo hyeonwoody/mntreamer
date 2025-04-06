@@ -8,12 +8,13 @@ import (
 )
 
 type IService interface {
+	GetRootPath() string
 	Download(media *mntreamerModel.Media, channelName string, platformId uint16) error
 	Save(platformId uint16, streamerId uint32, status int8)
+	GetFilePath(record *model.MediaRecord, platformName string, name string) string
 	GetFiles(filePath string) ([]model.FileInfo, error)
 	GetM3u8(filePath string, sequence uint16) ([]model.FileInfo, error)
 	GetMediaToRefine() ([]model.MediaRecord, error)
-	GetFilePath(mediaRecord *model.MediaRecord, channelName string) string
 	GetPlatformNameByFilePath(filePath string) (string, error)
 	GetChannelNameByFilePath(filePath string) (string, error)
 	GetDateByFilePath(fullPath string) (time.Time, error)

@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	parserBusiness "mntreamer/media/cmd/api/domain/business/parser"
-	platform "mntreamer/media/cmd/api/domain/business/platform"
 	"mntreamer/media/cmd/api/infrastructure/repository"
 	"mntreamer/media/cmd/model"
 	mntreamerModel "mntreamer/shared/model"
@@ -23,14 +22,17 @@ import (
 )
 
 type ShellScriptService struct {
-	bizStrat      *platform.BusinessStrategy
 	m3u8ParserBiz parserBusiness.IBusiness
 	repo          repository.IRepository
 	rootPath      string
 }
 
-func NewShellScriptService(bizStrat *platform.BusinessStrategy, repo repository.IRepository, m3u8ParserBiz parserBusiness.IBusiness, basePath string) *ShellScriptService {
-	return &ShellScriptService{bizStrat: bizStrat, m3u8ParserBiz: m3u8ParserBiz, repo: repo, rootPath: basePath}
+func NewShellScriptService(repo repository.IRepository, m3u8ParserBiz parserBusiness.IBusiness, basePath string) *ShellScriptService {
+	return &ShellScriptService{m3u8ParserBiz: m3u8ParserBiz, repo: repo, rootPath: basePath}
+}
+
+func (s *ShellScriptService) GetRootPath() string {
+	return s.rootPath
 }
 
 func (s *ShellScriptService) Download(media *mntreamerModel.Media, channelName string, platformId uint16) error {
